@@ -43,6 +43,9 @@ export default function HomePage() {
           </button>
         </div>
       </div>
+      <div className="bg-gray-100 rounded-3xl h-[300px] mt-10 flex items-center justify-center">
+        Illustration
+      </div>
     </div>
   );
 }
