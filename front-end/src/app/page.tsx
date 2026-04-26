@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, Briefcase, MapPin } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function HomePage() {
   return (
@@ -43,9 +44,14 @@ export default function HomePage() {
           </button>
         </div>
       </div>
-      <div className="bg-gray-100 rounded-3xl h-[300px] mt-10 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="bg-gray-100 rounded-3xl h-[300px] mt-10 flex items-center justify-center"
+        >
         Illustration
-      </div>
+      </motion.div>
     </div>
   );
 }
