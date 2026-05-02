@@ -227,6 +227,53 @@ const JobsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Featured Offers Section */}
+      <div className="max-w-7xl mx-auto px-4 pb-16 sm:px-6 lg:px-8">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4">Featured Offers</h2>
+        <p className="text-gray-400 mb-8 text-sm sm:text-base">
+          Explore the best job offers across several industries.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {FEATURED_JOBS.map((job) => (
+            <div
+              key={job.id}
+              className="bg-gray-800 border border-gray-600 rounded-lg p-6 flex flex-col h-full"
+            >
+              <div className="flex-1">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-4xl">{job.logo}</span>
+                  <span className="text-cyan-400 text-xs font-medium">
+                    {job.days}
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-bold mb-1">{job.title}</h3>
+
+                <p className="text-gray-400 text-sm mb-3">
+                  {job.company}, {job.location}
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="inline-block bg-gray-700 text-white text-xs px-2 py-1 rounded">
+                    {job.type}
+                  </span>
+                  <span className="inline-block border border-cyan-400 text-cyan-400 text-xs px-2 py-1 rounded">
+                    {job.salary}
+                  </span>
+                </div>
+
+                <p className="text-gray-400 text-sm">{job.description}</p>
+              </div>
+
+              <button className="w-full bg-cyan-500 hover:bg-cyan-600 text-gray-900 font-bold py-2 px-4 rounded-md transition-colors duration-200 mt-4 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-800">
+                Apply
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
