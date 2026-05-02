@@ -212,6 +212,20 @@ const JobsPage = () => {
             Search
           </button>
         </div>
+
+        {/* Trusted By Companies */}
+        <div className="mb-16">
+          <p className="text-gray-400 text-sm mb-4">
+            Trusted by top tier companies
+          </p>
+          <div className="flex flex-wrap justify-center gap-6">
+            {COMPANIES.map((company) => (
+              <span key={company.name} className="text-4xl">
+                {company.logo}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
