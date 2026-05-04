@@ -9,7 +9,9 @@ export default function HomePage() {
     <>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white text-gray-800">
         <nav className="flex justify-between items-center px-8 py-5">
-          <h1 className="text-2xl font-bold tracking-tight">HireLink</h1>
+          <Link href="/" className="text-2xl font-bold tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight">HireLink</h1>
+          </Link>
 
           <div className="space-x-6 hidden md:flex">
             <Link href="/jobs">Jobs</Link>
@@ -36,18 +38,12 @@ export default function HomePage() {
           <div className="bg-white p-4 rounded-2xl shadow-lg flex flex-col md:flex-row gap-3">
             <div className="flex items-center gap-2 border p-2 rounded-xl w-full">
               <Briefcase size={18} />
-              <input
-                placeholder="Job title"
-                className="outline-none w-full"
-              />
+              <input placeholder="Job title" className="outline-none w-full" />
             </div>
 
             <div className="flex items-center gap-2 border p-2 rounded-xl w-full">
               <MapPin size={18} />
-              <input
-                placeholder="Location"
-                className="outline-none w-full"
-              />
+              <input placeholder="Location" className="outline-none w-full" />
             </div>
 
             <button className="bg-black text-white px-6 py-2 rounded-xl flex items-center gap-2">
@@ -67,42 +63,28 @@ export default function HomePage() {
         </motion.div>
 
         <section className="px-8 py-12">
-          <h3 className="text-2xl font-semibold mb-6">
-            Popular Categories
-          </h3>
+          <h3 className="text-2xl font-semibold mb-6">Popular Categories</h3>
 
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {["Design", "Development", "Marketing", "Finance"].map(
-              (cat, i) => (
-                <div
-                  key={i}
-                  className="p-6 bg-white rounded-2xl shadow"
-                >
-                  <h4 className="font-semibold">{cat}</h4>
-                  <p className="text-sm text-gray-500">120+ jobs</p>
-                </div>
-              )
-            )}
+            {["Design", "Development", "Marketing", "Finance"].map((cat, i) => (
+              <div key={i} className="p-6 bg-white rounded-2xl shadow">
+                <h4 className="font-semibold">{cat}</h4>
+                <p className="text-sm text-gray-500">120+ jobs</p>
+              </div>
+            ))}
           </div>
         </section>
       </div>
 
       <section className="px-8 py-12 bg-gray-50">
-        <h3 className="text-2xl font-semibold mb-6">
-          Featured Jobs
-        </h3>
+        <h3 className="text-2xl font-semibold mb-6">Featured Jobs</h3>
 
         <div className="grid md:grid-cols-3 gap-6">
           {[1, 2, 3].map((job) => (
-            <div
-              key={job}
-              className="bg-white p-6 rounded-2xl shadow"
-            >
+            <div key={job} className="bg-white p-6 rounded-2xl shadow">
               <h4 className="font-semibold">Frontend Developer</h4>
 
-              <p className="text-gray-500 text-sm">
-                Remote • Full-time
-              </p>
+              <p className="text-gray-500 text-sm">Remote • Full-time</p>
             </div>
           ))}
         </div>

@@ -1,281 +1,490 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useState, useMemo } from "react";
+import { Search, Briefcase, MapPin, Filter, X } from "lucide-react";
+import JobCard from "@/components/JobCard";
 
-interface Job {
-  id: number;
-  title: string;
-  company: string;
-  location: string;
-  salary: string;
-  type: string;
-  logo: string;
-  days: string;
-  description: string;
-}
-
-const FEATURED_JOBS: Job[] = [
+// Sample job data - replace with actual API call
+const MOCK_JOBS = [
   {
-    id: 1,
+    id: "1",
+    title: "Senior Frontend Developer",
+    company: "Tech Solutions Inc.",
+    location: "Remote",
+    type: "Full-time" as const,
+    salary: "$120k - $150k",
+    description:
+      "We're looking for an experienced frontend developer to lead our React migration project. Must have 5+ years experience.",
+    tags: ["React", "TypeScript", "Tailwind CSS"],
+  },
+  {
+    id: "2",
+    title: "UX/UI Designer",
+    company: "Creative Studio",
+    location: "New York, NY",
+    type: "Full-time" as const,
+    salary: "$90k - $120k",
+    description:
+      "Join our design team to create beautiful and intuitive user interfaces for web and mobile applications.",
+    tags: ["Figma", "UI/UX", "Prototyping"],
+  },
+  {
+    id: "3",
+    title: "Backend Engineer",
+    company: "DataStream Systems",
+    location: "San Francisco, CA",
+    type: "Full-time" as const,
+    salary: "$130k - $160k",
+    description:
+      "Build scalable backend systems with Node.js and PostgreSQL. Experience with microservices required.",
+    tags: ["Node.js", "PostgreSQL", "Docker"],
+  },
+  {
+    id: "4",
     title: "Product Manager",
-    company: "Facebook",
-    location: "Vancouver",
-    salary: "$10k-$15k",
-    type: "On-site",
-    logo: "👨‍💼",
-    days: "4 hrs ago",
-    description: "Explore the best job offers across several industries.",
+    company: "StartupXYZ",
+    location: "Hybrid",
+    type: "Full-time" as const,
+    salary: "$100k - $140k",
+    description:
+      "Lead product strategy and development for our SaaS platform serving enterprise customers.",
+    tags: ["Product Strategy", "Agile", "Analytics"],
   },
   {
-    id: 2,
-    title: "Software Engineer",
-    company: "Google",
-    location: "Silicon Valley",
-    salary: "$150k",
-    type: "Remote",
-    logo: "🔍",
-    days: "8 hrs ago",
-    description: "Explore the best job offers across several industries.",
+    id: "5",
+    title: "Marketing Manager",
+    company: "BrandMax",
+    location: "Chicago, IL",
+    type: "Full-time" as const,
+    salary: "$85k - $110k",
+    description:
+      "Develop and execute marketing campaigns for B2B SaaS products targeting enterprise clients.",
+    tags: ["Digital Marketing", "SEO", "Content"],
   },
   {
-    id: 3,
-    title: "Frontend Engineer",
-    company: "Twitter",
-    location: "Vancouver",
-    salary: "$8k-$8k",
-    type: "Hybrid",
-    logo: "🕊️",
-    days: "12 Nov 22",
-    description: "Explore the best job offers across several industries.",
+    id: "6",
+    title: "DevOps Engineer",
+    company: "CloudNine",
+    location: "Remote",
+    type: "Full-time" as const,
+    salary: "$125k - $155k",
+    description:
+      "Manage infrastructure and deployment pipelines. Experience with AWS, Kubernetes, and CI/CD required.",
+    tags: ["AWS", "Kubernetes", "CI/CD"],
   },
   {
-    id: 4,
-    title: "Business Analyst",
-    company: "Stripe",
-    location: "London",
-    salary: "$10k",
-    type: "Hybrid",
-    logo: "💼",
-    days: "4 hrs ago",
-    description: "Explore the best job offers across several industries.",
+    id: "7",
+    title: "Data Scientist",
+    company: "Analytics Pro",
+    location: "Boston, MA",
+    type: "Full-time" as const,
+    salary: "$110k - $145k",
+    description:
+      "Build machine learning models and data pipelines to drive business insights and optimization.",
+    tags: ["Python", "Machine Learning", "SQL"],
   },
   {
-    id: 5,
-    title: "DevOps",
-    company: "Microsoft",
-    location: "Lagos",
-    salary: "$1k-$1.5k",
-    type: "Remote",
-    logo: "⚙️",
-    days: "13 Nov 22",
-    description: "Explore the best job offers across several industries.",
+    id: "8",
+    title: "Junior Developer",
+    company: "Learning Labs",
+    location: "Remote",
+    type: "Full-time" as const,
+    salary: "$60k - $80k",
+    description:
+      "Great opportunity for early-career developers. We provide mentorship and training while you build real projects.",
+    tags: ["JavaScript", "React", "CSS"],
   },
   {
-    id: 6,
-    title: "Visual Designer",
-    company: "Twitter",
-    location: "Vancouver",
-    salary: "$10k-$15k",
-    type: "Remote",
-    logo: "🎨",
-    days: "14 Nov 22",
-    description: "Explore the best job offers across several industries.",
+    id: "9",
+    title: "Mobile Developer",
+    company: "App Innovations",
+    location: "Austin, TX",
+    type: "Full-time" as const,
+    salary: "$105k - $135k",
+    description:
+      "Develop iOS and Android applications using React Native. Portfolio of published apps required.",
+    tags: ["React Native", "Mobile", "TypeScript"],
+  },
+  {
+    id: "10",
+    title: "QA Automation Engineer",
+    company: "QualityFirst",
+    location: "Hybrid",
+    type: "Full-time" as const,
+    salary: "$95k - $125k",
+    description:
+      "Create automated test suites and ensure product quality across all platforms and browsers.",
+    tags: ["Selenium", "Testing", "Python"],
   },
 ];
 
-const COMPANIES = [
-  { name: "Stripe", logo: "💳" },
-  { name: "Facebook", logo: "👨‍💼" },
-  { name: "Shopify", logo: "🛍️" },
-  { name: "Microsoft", logo: "⚙️" },
-  { name: "Google", logo: "🔍" },
-];
+export default function JobsPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [locationTerm, setLocationTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    jobType: [] as string[],
+    location: [] as string[],
+    salaryRange: "",
+    experienceLevel: [] as string[],
+  });
 
-const JobsPage = () => {
-  const [jobTitle, setJobTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [jobType, setJobType] = useState("");
+  // Filter options
+  const jobTypes = ["Full-time", "Part-time", "Contract", "Freelance"];
+  const locations = ["Remote", "Hybrid", "On-site"];
+  const salaryRanges = [
+    "Under $50k",
+    "$50k - $80k",
+    "$80k - $120k",
+    "$120k - $150k",
+    "$150k+",
+  ];
+  const experienceLevels = ["Junior", "Mid-level", "Senior"];
 
-  const handleSearch = () => {
-    console.log({ jobTitle, location, jobType });
+  // Filtered jobs based on search and filters
+  const filteredJobs = useMemo(() => {
+    return MOCK_JOBS.filter((job) => {
+      // Search term filter (title, company, description, tags)
+      const matchesSearch =
+        searchTerm === "" ||
+        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.tags.some((tag) =>
+          tag.toLowerCase().includes(searchTerm.toLowerCase()),
+        );
+
+      // Location filter
+      const matchesLocation =
+        locationTerm === "" ||
+        job.location.toLowerCase().includes(locationTerm.toLowerCase());
+
+      // Job type filter
+      const matchesJobType =
+        filters.jobType.length === 0 || filters.jobType.includes(job.type);
+
+      // Location type filter
+      const matchesLocationType =
+        filters.location.length === 0 ||
+        filters.location.some((loc) =>
+          job.location.toLowerCase().includes(loc.toLowerCase()),
+        );
+
+      // Salary range filter
+      const matchesSalary = (() => {
+        if (!filters.salaryRange) return true;
+        const salary = job.salary?.replace(/[$,k]/g, "") || "";
+        const [min, max] = salary.split(" - ").map((s) => parseInt(s));
+
+        switch (filters.salaryRange) {
+          case "Under $50k":
+            return min < 50;
+          case "$50k - $80k":
+            return min >= 50 && min <= 80;
+          case "$80k - $120k":
+            return min >= 80 && min <= 120;
+          case "$120k - $150k":
+            return min >= 120 && min <= 150;
+          case "$150k+":
+            return min >= 150;
+          default:
+            return true;
+        }
+      })();
+
+      // Experience level filter (based on title keywords)
+      const matchesExperience =
+        filters.experienceLevel.length === 0 ||
+        filters.experienceLevel.some((level) => {
+          const title = job.title.toLowerCase();
+          if (level === "Junior")
+            return title.includes("junior") || title.includes("entry");
+          if (level === "Mid-level")
+            return title.includes("mid") || title.includes("intermediate");
+          if (level === "Senior")
+            return (
+              title.includes("senior") ||
+              title.includes("lead") ||
+              title.includes("principal")
+            );
+          return false;
+        });
+
+      return (
+        matchesSearch &&
+        matchesLocation &&
+        matchesJobType &&
+        matchesLocationType &&
+        matchesSalary &&
+        matchesExperience
+      );
+    });
+  }, [searchTerm, locationTerm, filters]);
+
+  const handleFilterChange = (
+    filterType: string,
+    value: string,
+    checked: boolean,
+  ) => {
+    setFilters((prev) => ({
+      ...prev,
+      [filterType]: checked
+        ? [...(prev[filterType as keyof typeof prev] as string[]), value]
+        : (prev[filterType as keyof typeof prev] as string[]).filter(
+            (item) => item !== value,
+          ),
+    }));
   };
 
+  const clearFilters = () => {
+    setFilters({
+      jobType: [],
+      location: [],
+      salaryRange: "",
+      experienceLevel: [],
+    });
+    setSearchTerm("");
+    setLocationTerm("");
+  };
+
+  const activeFiltersCount =
+    filters.jobType.length +
+    filters.location.length +
+    filters.experienceLevel.length +
+    (filters.salaryRange ? 1 : 0);
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 py-8 text-center sm:px-6 lg:px-8 lg:py-16">
-        <span className="inline-block text-xs font-bold tracking-wide text-cyan-400 uppercase">
-          OVER 2000+ JOBS LISTED
-        </span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white text-gray-800">
+      {/* Navigation */}
+      <nav className="flex justify-between items-center px-8 py-5 border-b border-gray-200">
+        <Link href="/" className="text-2xl font-bold tracking-tight">
+          HireLink
+        </Link>
 
-        <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold mt-6 mb-4">
-          Find your new Job in a Few Clicks
-        </h1>
+        <div className="space-x-6 hidden md:flex">
+          <Link href="/jobs">Jobs</Link>
+          <Link href="/companies">Companies</Link>
+          <Link href="/about">About</Link>
+        </div>
 
-        <p className="text-gray-400 mb-8 max-w-2xl mx-auto text-sm sm:text-base">
-          HireLink is a job search platform that helps employers and job seekers
-          to find their perfect match in jobs and career.
+        <button className="bg-black text-white px-4 py-2 rounded-xl">
+          <Link href="/register">Sign Up</Link>
+        </button>
+      </nav>
+
+      {/* Header */}
+      <section className="px-8 py-12">
+        <h2 className="text-4xl font-bold mb-3">Job Opportunities</h2>
+        <p className="text-gray-500 mb-8">
+          Browse our latest job postings across all industries.
         </p>
 
         {/* Search Bar */}
-        <div className="bg-gray-800 rounded-lg p-4 mb-12 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg
-                className="h-5 w-5 text-cyan-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
+        <div className="bg-white p-4 rounded-2xl shadow-lg flex flex-col md:flex-row gap-3">
+          <div className="flex items-center gap-2 border border-gray-200 p-3 rounded-xl w-full">
+            <Briefcase size={18} className="text-gray-600" />
             <input
-              type="text"
-              placeholder="Job Title"
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 bg-gray-900 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+              placeholder="Job title or keyword"
+              className="outline-none w-full"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg
-                className="h-5 w-5 text-cyan-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
+          <div className="flex items-center gap-2 border border-gray-200 p-3 rounded-xl w-full">
+            <MapPin size={18} className="text-gray-600" />
             <input
-              type="text"
               placeholder="Location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 bg-gray-900 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+              className="outline-none w-full"
+              value={locationTerm}
+              onChange={(e) => setLocationTerm(e.target.value)}
             />
-          </div>
-
-          <div className="relative">
-            <select
-              value={jobType}
-              onChange={(e) => setJobType(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent appearance-none"
-            >
-              <option value="" className="bg-gray-900">
-                All Types
-              </option>
-              <option value="on-site" className="bg-gray-900">
-                On-site
-              </option>
-              <option value="remote" className="bg-gray-900">
-                Remote
-              </option>
-              <option value="hybrid" className="bg-gray-900">
-                Hybrid
-              </option>
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-              <svg
-                className="h-4 w-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
           </div>
 
           <button
-            onClick={handleSearch}
-            className="bg-cyan-500 hover:bg-cyan-600 text-gray-900 font-bold py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-800"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-6 py-3 rounded-xl flex items-center gap-2 whitespace-nowrap transition ${
+              showFilters
+                ? "bg-gray-200 text-gray-800"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
           >
+            <Filter size={18} />
+            Filters
+            {activeFiltersCount > 0 && (
+              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+
+          <button className="bg-black text-white px-6 py-3 rounded-xl flex items-center gap-2 whitespace-nowrap hover:bg-gray-800 transition">
+            <Search size={18} />
             Search
           </button>
         </div>
 
-        {/* Trusted By Companies */}
-        <div className="mb-16">
-          <p className="text-gray-400 text-sm mb-4">
-            Trusted by top tier companies
-          </p>
-          <div className="flex flex-wrap justify-center gap-6">
-            {COMPANIES.map((company) => (
-              <span key={company.name} className="text-4xl">
-                {company.logo}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Featured Offers Section */}
-      <div className="max-w-7xl mx-auto px-4 pb-16 sm:px-6 lg:px-8">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-4">Featured Offers</h2>
-        <p className="text-gray-400 mb-8 text-sm sm:text-base">
-          Explore the best job offers across several industries.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {FEATURED_JOBS.map((job) => (
-            <div
-              key={job.id}
-              className="bg-gray-800 border border-gray-600 rounded-lg p-6 flex flex-col h-full"
-            >
-              <div className="flex-1">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-4xl">{job.logo}</span>
-                  <span className="text-cyan-400 text-xs font-medium">
-                    {job.days}
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-bold mb-1">{job.title}</h3>
-
-                <p className="text-gray-400 text-sm mb-3">
-                  {job.company}, {job.location}
-                </p>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="inline-block bg-gray-700 text-white text-xs px-2 py-1 rounded">
-                    {job.type}
-                  </span>
-                  <span className="inline-block border border-cyan-400 text-cyan-400 text-xs px-2 py-1 rounded">
-                    {job.salary}
-                  </span>
-                </div>
-
-                <p className="text-gray-400 text-sm">{job.description}</p>
-              </div>
-
-              <button className="w-full bg-cyan-500 hover:bg-cyan-600 text-gray-900 font-bold py-2 px-4 rounded-md transition-colors duration-200 mt-4 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-800">
-                Apply
+        {/* Filters Panel */}
+        {showFilters && (
+          <div className="bg-white p-6 rounded-2xl shadow-lg mt-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">Filters</h3>
+              <button
+                onClick={clearFilters}
+                className="text-gray-500 hover:text-gray-700 flex items-center gap-2"
+              >
+                <X size={16} />
+                Clear all
               </button>
             </div>
-          ))}
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Job Type */}
+              <div>
+                <h4 className="font-medium mb-3">Job Type</h4>
+                <div className="space-y-2">
+                  {jobTypes.map((type) => (
+                    <label key={type} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={filters.jobType.includes(type)}
+                        onChange={(e) =>
+                          handleFilterChange("jobType", type, e.target.checked)
+                        }
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Location Type */}
+              <div>
+                <h4 className="font-medium mb-3">Work Location</h4>
+                <div className="space-y-2">
+                  {locations.map((location) => (
+                    <label key={location} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={filters.location.includes(location)}
+                        onChange={(e) =>
+                          handleFilterChange(
+                            "location",
+                            location,
+                            e.target.checked,
+                          )
+                        }
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">{location}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Salary Range */}
+              <div>
+                <h4 className="font-medium mb-3">Salary Range</h4>
+                <div className="space-y-2">
+                  {salaryRanges.map((range) => (
+                    <label key={range} className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="salaryRange"
+                        value={range}
+                        checked={filters.salaryRange === range}
+                        onChange={(e) =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            salaryRange: e.target.value,
+                          }))
+                        }
+                        className="border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">{range}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Experience Level */}
+              <div>
+                <h4 className="font-medium mb-3">Experience Level</h4>
+                <div className="space-y-2">
+                  {experienceLevels.map((level) => (
+                    <label key={level} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={filters.experienceLevel.includes(level)}
+                        onChange={(e) =>
+                          handleFilterChange(
+                            "experienceLevel",
+                            level,
+                            e.target.checked,
+                          )
+                        }
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">{level}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Jobs Grid */}
+      <section className="px-8 py-12">
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-xl font-semibold">
+            {filteredJobs.length} Job{filteredJobs.length !== 1 ? "s" : ""}{" "}
+            Found
+          </h3>
+          <select className="border border-gray-200 rounded-lg px-4 py-2 bg-white">
+            <option>Most Recent</option>
+            <option>Most Relevant</option>
+            <option>Salary: High to Low</option>
+            <option>Salary: Low to High</option>
+          </select>
         </div>
-      </div>
+
+        {filteredJobs.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4">
+              <Search size={48} className="mx-auto" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No jobs found
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Try adjusting your search criteria or filters
+            </p>
+            <button
+              onClick={clearFilters}
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Clear all filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredJobs.map((job) => (
+              <JobCard key={job.id} {...job} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Load More */}
+      <section className="px-8 py-12 text-center">
+        <button className="border border-gray-300 text-gray-800 px-8 py-3 rounded-xl hover:bg-gray-50 transition">
+          Load More Jobs
+        </button>
+      </section>
     </div>
   );
-};
-
-export default JobsPage;
+}
