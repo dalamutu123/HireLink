@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { createUser, findUserByEmail } from "../users/users.model.js";
+import { createJobseekerProfile, createEmployerProfile } from "../users/users.model.js";
 
 // Generate JWT token
 const generateToken = (id, role) => {
@@ -18,8 +19,8 @@ export const registerUser = async (req, res) => {
     }
 
     // Validate role
-    if (!["jobseeker", "employer"].includes(role)) {
-      return res.status(400).json({ message: "Role must be jobseeker or employer" });
+    if (!["jobseeker", "employer", "admin"].includes(role)) {
+      return res.status(400).json({ message: "Role must be jobseeker, employer or admin" });
     }
 
     // Check if user already exists
@@ -33,6 +34,13 @@ export const registerUser = async (req, res) => {
 
     // Save user to database
     const newUser = await createUser(name, email, hashedPassword, role);
+
+    // Automatically create an empty profile based on role
+    if (role === "jobseeker") {
+      await createJobseekerProfile(newUser.id);
+    } else if (role === "employer") {
+      await createEmployerProfile(newUser.id);
+    }
 
     // Generate token
     const token = generateToken(newUser.id, newUser.role);
