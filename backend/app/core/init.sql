@@ -42,3 +42,13 @@ CREATE TABLE IF NOT EXISTS jobs (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS applications (
+  id SERIAL PRIMARY KEY,
+  job_id INTEGER REFERENCES jobs(id) ON DELETE CASCADE,
+  jobseeker_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  status VARCHAR(20) CHECK (status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
+  cover_letter TEXT,
+  applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(job_id, jobseeker_id)
+);
