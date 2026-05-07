@@ -28,3 +28,17 @@ CREATE TABLE IF NOT EXISTS employer_profiles (
   location VARCHAR(100),
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS jobs (
+  id SERIAL PRIMARY KEY,
+  employer_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  title VARCHAR(150) NOT NULL,
+  description TEXT NOT NULL,
+  location VARCHAR(100) NOT NULL,
+  industry VARCHAR(100) NOT NULL,
+  salary VARCHAR(100),
+  job_type VARCHAR(50) CHECK (job_type IN ('full-time', 'part-time', 'contract')) NOT NULL,
+  deadline DATE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
