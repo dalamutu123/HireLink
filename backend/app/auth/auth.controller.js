@@ -18,8 +18,8 @@ export const registerUser = async (req, res) => {
     }
 
     // Validate role
-    if (!["jobseeker", "employer"].includes(role)) {
-      return res.status(400).json({ message: "Role must be jobseeker or employer" });
+    if (!["jobseeker", "employer", "admin"].includes(role)) {
+      return res.status(400).json({ message: "Role must be jobseeker, employer, or admin" });
     }
 
     // Check if user already exists
