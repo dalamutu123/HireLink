@@ -109,3 +109,48 @@ export const deleteJob = async (req, res) => {
     res.status(500).json({ message: "Server error deleting job listing" });
   }
 };
+
+// GET /api/jobs
+export const getJobs = async (req, res) => {
+  try {
+    const { keyword, location, industry, job_type } = req.query;
+
+    // If any filter is provided, use search, otherwise get all jobs
+    let jobs;
+    if (keyword || location || industry || job_type) {
+      jobs = await searchJobs({ keyword, location, industry, job_type });
+    } else {
+      jobs = await findAllJobs();
+    }
+
+    if (!jobs || jobs.length === 0) {
+      return res.status(404).json({ message: "No job listings found" });
+    }
+
+    res.status(200).json({
+      message: "Job listings retrieved successfully",
+      count: jobs.length,
+      jobs,
+    });
+  } catch (error) {
+    console.error("Get jobs error:", error.message);
+    res.status(500).json({ message: "Server error getting job listings" });
+  }
+};
+
+// GET /api/jobs/:id
+export const getJob = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const job = await findJobById(id);
+    if (!job) {
+      return res.status(404).json({ message: "Job listing not found" });
+    }
+
+    res.status(200).json({ job });
+  } catch (error) {
+    console.error("Get job error:", error.message);
+    res.status(500).json({ message: "Server error getting job listing" });
+  }
+};
