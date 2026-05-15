@@ -1,5 +1,7 @@
+import bcrypt from "bcrypt";
 import {
   findUserById,
+  findUserByEmail,
   updateUserById,
   deleteUserById,
   getAllUsers,
@@ -8,6 +10,7 @@ import {
   getEmployerProfile,
   updateEmployerProfile,
 } from "./users.model.js";
+
 
 // GET /api/users/me
 export const getMe = async (req, res) => {
@@ -152,5 +155,52 @@ export const getUserById = async (req, res) => {
   } catch (error) {
     console.error("Get user by id error:", error.message);
     res.status(500).json({ message: "Server error getting user" });
+  }
+};
+
+// PUT /api/users/me/password
+export const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate fields
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current password and new password are required" });
+    }
+
+    // Validate new password length
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: "New password must be at least 8 characters" });
+    }
+
+    // Get user with password
+    const user = await findUserByEmail(req.user.email);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if current password is correct
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    // Prevent using the same password
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return res.status(400).json({ message: "New password must be different from current password" });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await updateUserPassword(userId, hashedPassword);
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Change password error:", error.message);
+    res.status(500).json({ message: "Server error changing password" });
   }
 };

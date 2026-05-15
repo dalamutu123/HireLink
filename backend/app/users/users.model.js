@@ -135,3 +135,51 @@ export const updateEmployerProfile = async (userId, fields) => {
   );
   return result.rows[0];
 };
+
+// ─── Password Queries ─────────────────────────────────────────
+
+// Update a user's password
+export const updateUserPassword = async (id, hashedPassword) => {
+  const result = await pool.query(
+    `UPDATE users SET password = $1 WHERE id = $2
+     RETURNING id, name, email, role, created_at`,
+    [hashedPassword, id]
+  );
+  return result.rows[0];
+};
+
+// ─── Password Reset Token Queries ────────────────────────────
+
+// Save a reset token
+export const saveResetToken = async (userId, token, expiresAt) => {
+  // Delete any existing token for this user first
+  await pool.query(
+    `DELETE FROM password_reset_tokens WHERE user_id = $1`,
+    [userId]
+  );
+
+  const result = await pool.query(
+    `INSERT INTO password_reset_tokens (user_id, token, expires_at)
+     VALUES ($1, $2, $3)
+     RETURNING *`,
+    [userId, token, expiresAt]
+  );
+  return result.rows[0];
+};
+
+// Find a reset token
+export const findResetToken = async (token) => {
+  const result = await pool.query(
+    `SELECT * FROM password_reset_tokens WHERE token = $1`,
+    [token]
+  );
+  return result.rows[0];
+};
+
+// Delete a reset token after it has been used
+export const deleteResetToken = async (token) => {
+  await pool.query(
+    `DELETE FROM password_reset_tokens WHERE token = $1`,
+    [token]
+  );
+};
