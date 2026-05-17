@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Search, Briefcase, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
+import Footer from "@/components/Footer";
+import { Job } from "@/types";
 
 export default function HomePage() {
   const [query, setQuery] = useState("");
@@ -11,7 +13,7 @@ export default function HomePage() {
 
   const searchUrl = `/jobs?search=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}`;
 
-  const jobs = [
+  const jobs: Partial<Job>[] = [
     {
       id: 1,
       title: "Frontend Developer",
