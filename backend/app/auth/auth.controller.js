@@ -8,9 +8,9 @@ import {
   findResetToken,
   deleteResetToken,
   updateUserPassword,
+  createJobseekerProfile,
+  createEmployerProfile,
 } from "../users/users.model.js";
-import { createUser, findUserByEmail } from "../users/users.model.js";
-import { createJobseekerProfile, createEmployerProfile } from "../users/users.model.js";
 import { sendPasswordResetEmail } from "../core/email.js";
 
 // Generate JWT token

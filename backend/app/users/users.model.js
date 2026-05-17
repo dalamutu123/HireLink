@@ -31,12 +31,20 @@ export const findUserById = async (id) => {
   return result.rows[0];
 };
 
-// Get all users (admin only)
-export const getAllUsers = async () => {
+// Get all users (admin only, paginated)
+export const getAllUsers = async ({ limit, offset }) => {
+  const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM users`);
+  const total = countResult.rows[0].total;
+
   const result = await pool.query(
-    `SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC`
+    `SELECT id, name, email, role, created_at
+     FROM users
+     ORDER BY created_at DESC
+     LIMIT $1 OFFSET $2`,
+    [limit, offset]
   );
-  return result.rows;
+
+  return { rows: result.rows, total };
 };
 
 // Update user name or email

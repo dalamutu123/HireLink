@@ -9,18 +9,20 @@ import {
 import { protect, restrictTo } from "../core/middleware.js";
 import {
   applyForJobValidator,
-  updateStatusValidator,
+  patchStatusValidator,
+  paginationQueryValidator,
 } from "../core/validators.js";
 
 const router = express.Router();
 
 // ─── Jobseeker Only Routes ────────────────────────────────────
+router.get("/", protect, restrictTo("jobseeker"), paginationQueryValidator, getMyApplications);
+router.get("/me", protect, restrictTo("jobseeker"), paginationQueryValidator, getMyApplications);
 router.post("/:jobId", protect, restrictTo("jobseeker"), applyForJobValidator, applyForJob);
-router.get("/me", protect, restrictTo("jobseeker"), getMyApplications);
 router.delete("/:id", protect, restrictTo("jobseeker"), withdrawApplication);
 
 // ─── Employer Only Routes ─────────────────────────────────────
-router.get("/job/:jobId", protect, restrictTo("employer"), getJobApplications);
-router.put("/:id/status", protect, restrictTo("employer"), updateStatusValidator, updateStatus);
+router.get("/job/:job_id", protect, restrictTo("employer"), paginationQueryValidator, getJobApplications);
+router.patch("/:id/status", protect, restrictTo("employer"), patchStatusValidator, updateStatus);
 
 export default router;

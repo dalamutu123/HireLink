@@ -1,4 +1,4 @@
-import { body, validationResult } from "express-validator";
+import { body, query, validationResult } from "express-validator";
 
 // Middleware to check validation results
 export const validate = (req, res, next) => {
@@ -14,6 +14,20 @@ export const validate = (req, res, next) => {
   }
   next();
 };
+
+// ─── Pagination ───────────────────────────────────────────────
+
+export const paginationQueryValidator = [
+  query("page")
+    .optional()
+    .isInt({ min: 1 }).withMessage("page must be a positive integer"),
+
+  query("limit")
+    .optional()
+    .isInt({ min: 1, max: 100 }).withMessage("limit must be between 1 and 100"),
+
+  validate,
+];
 
 // ─── Auth Validators ──────────────────────────────────────────
 
@@ -125,6 +139,18 @@ export const postJobValidator = [
     .optional()
     .isDate().withMessage("Deadline must be a valid date"),
 
+  body("salary_min")
+    .optional()
+    .isInt({ min: 0 }).withMessage("salary_min must be a non-negative integer"),
+
+  body("salary_max")
+    .optional()
+    .isInt({ min: 0 }).withMessage("salary_max must be a non-negative integer"),
+
+  body("salary")
+    .optional()
+    .trim(),
+
   validate,
 ];
 
@@ -157,7 +183,95 @@ export const updateJobValidator = [
     .optional()
     .isDate().withMessage("Deadline must be a valid date"),
 
+  body("salary_min")
+    .optional()
+    .isInt({ min: 0 }).withMessage("salary_min must be a non-negative integer"),
+
+  body("salary_max")
+    .optional()
+    .isInt({ min: 0 }).withMessage("salary_max must be a non-negative integer"),
+
+  body("salary")
+    .optional()
+    .trim(),
+
   validate,
+];
+
+export const searchJobsValidator = [
+  query("title")
+    .optional()
+    .trim()
+    .notEmpty().withMessage("Title cannot be empty"),
+
+  query("location")
+    .optional()
+    .trim()
+    .notEmpty().withMessage("Location cannot be empty"),
+
+  query("min_salary")
+    .optional()
+    .isInt({ min: 0 }).withMessage("min_salary must be a non-negative integer"),
+
+  query("max_salary")
+    .optional()
+    .isInt({ min: 0 }).withMessage("max_salary must be a non-negative integer"),
+
+  query("posted_after")
+    .optional()
+    .isDate().withMessage("posted_after must be a valid date (YYYY-MM-DD)"),
+
+  query("posted_before")
+    .optional()
+    .isDate().withMessage("posted_before must be a valid date (YYYY-MM-DD)"),
+
+  query("posted_on")
+    .optional()
+    .isDate().withMessage("posted_on must be a valid date (YYYY-MM-DD)"),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: errors.array().map((err) => ({
+          field: err.path,
+          message: err.msg,
+        })),
+      });
+    }
+
+    const { title, location, min_salary, max_salary, posted_after, posted_before, posted_on } = req.query;
+
+    if (
+      !title &&
+      !location &&
+      min_salary === undefined &&
+      max_salary === undefined &&
+      !posted_after &&
+      !posted_before &&
+      !posted_on
+    ) {
+      return res.status(400).json({
+        message:
+          "At least one search parameter is required: title, location, min_salary, max_salary, posted_after, posted_before, or posted_on",
+      });
+    }
+
+    if (min_salary !== undefined && max_salary !== undefined && Number(min_salary) > Number(max_salary)) {
+      return res.status(400).json({
+        message: "min_salary cannot be greater than max_salary",
+      });
+    }
+
+    if (posted_after && posted_before && posted_after > posted_before) {
+      return res.status(400).json({
+        message: "posted_after cannot be after posted_before",
+      });
+    }
+
+    next();
+  },
 ];
 
 // ─── Application Validators ───────────────────────────────────
@@ -174,7 +288,15 @@ export const applyForJobValidator = [
 export const updateStatusValidator = [
   body("status")
     .notEmpty().withMessage("Status is required")
-    .isIn(["pending", "accepted", "rejected"]).withMessage("Status must be pending, accepted or rejected"),
+    .isIn(["applied", "accepted", "rejected"]).withMessage("Status must be applied, accepted or rejected"),
+
+  validate,
+];
+
+export const patchStatusValidator = [
+  body("status")
+    .notEmpty().withMessage("Status is required")
+    .isIn(["accepted", "rejected"]).withMessage("Status must be accepted or rejected"),
 
   validate,
 ];

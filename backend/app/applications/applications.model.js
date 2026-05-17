@@ -30,8 +30,14 @@ export const findApplicationById = async (id) => {
   return result.rows[0];
 };
 
-// Get all applications by a jobseeker
-export const findApplicationsByJobseeker = async (jobseekerId) => {
+// Get all applications by a jobseeker (paginated)
+export const findApplicationsByJobseeker = async (jobseekerId, { limit, offset }) => {
+  const countResult = await pool.query(
+    `SELECT COUNT(*)::int AS total FROM applications WHERE jobseeker_id = $1`,
+    [jobseekerId]
+  );
+  const total = countResult.rows[0].total;
+
   const result = await pool.query(
     `SELECT a.*, j.title AS job_title, j.location, j.job_type,
             j.industry, j.salary, u.name AS employer_name
@@ -39,14 +45,22 @@ export const findApplicationsByJobseeker = async (jobseekerId) => {
      JOIN jobs j ON a.job_id = j.id
      JOIN users u ON j.employer_id = u.id
      WHERE a.jobseeker_id = $1
-     ORDER BY a.applied_at DESC`,
-    [jobseekerId]
+     ORDER BY a.applied_at DESC
+     LIMIT $2 OFFSET $3`,
+    [jobseekerId, limit, offset]
   );
-  return result.rows;
+
+  return { rows: result.rows, total };
 };
 
-// Get all applications for a job (employer view with full jobseeker profile)
-export const findApplicationsByJob = async (jobId) => {
+// Get all applications for a job (paginated, employer view)
+export const findApplicationsByJob = async (jobId, { limit, offset }) => {
+  const countResult = await pool.query(
+    `SELECT COUNT(*)::int AS total FROM applications WHERE job_id = $1`,
+    [jobId]
+  );
+  const total = countResult.rows[0].total;
+
   const result = await pool.query(
     `SELECT a.*, u.name AS jobseeker_name, u.email AS jobseeker_email,
             jp.bio, jp.skills, jp.experience, jp.resume_url, jp.location
@@ -54,10 +68,12 @@ export const findApplicationsByJob = async (jobId) => {
      JOIN users u ON a.jobseeker_id = u.id
      LEFT JOIN jobseeker_profiles jp ON a.jobseeker_id = jp.user_id
      WHERE a.job_id = $1
-     ORDER BY a.applied_at DESC`,
-    [jobId]
+     ORDER BY a.applied_at DESC
+     LIMIT $2 OFFSET $3`,
+    [jobId, limit, offset]
   );
-  return result.rows;
+
+  return { rows: result.rows, total };
 };
 
 // Update application status

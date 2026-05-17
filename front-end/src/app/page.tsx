@@ -95,7 +95,7 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-gray-100 rounded-3xl h-[300px] mt-10 flex items-center justify-center"
+          className="bg-gray-100 rounded-3xl h-[75] mt-10 flex items-center justify-center"
         >
           Illustration
         </motion.div>
@@ -115,11 +115,16 @@ export default function HomePage() {
       </div>
 
       <section className="px-8 py-12 bg-gray-50">
-        <h3 className="text-black text-2xl font-semibold mb-6">Featured Jobs</h3>
+        <h3 className="text-black text-2xl font-semibold mb-6">
+          Featured Jobs
+        </h3>
 
         <div className="grid md:grid-cols-3 gap-6">
           {jobs.map((job) => (
-            <div key={job.id} className="text-black bg-white p-6 rounded-2xl shadow">
+            <div
+              key={job.id}
+              className="text-black bg-white p-6 rounded-2xl shadow"
+            >
               <h4 className="font-semibold">{job.title}</h4>
 
               <p className="text-gray-500 text-sm">{job.type}</p>

@@ -6,21 +6,24 @@ import {
   deleteJobById,
   searchJobs,
 } from "./jobs.model.js";
+import { parsePagination, buildPagination } from "../core/pagination.js";
 
 // POST /api/jobs
 export const postJob = async (req, res) => {
   try {
     const employerId = req.user.id;
-    const { title, description, location, industry, salary, job_type, deadline } = req.body;
+    const { title, description, location, industry, salary, salary_min, salary_max, job_type, deadline } = req.body;
 
-    // Validate required fields
     if (!title || !description || !location || !industry || !job_type) {
       return res.status(400).json({ message: "All required fields must be provided" });
     }
 
-    // Validate job_type
     if (!["full-time", "part-time", "contract"].includes(job_type)) {
       return res.status(400).json({ message: "Job type must be full-time, part-time or contract" });
+    }
+
+    if (salary_min != null && salary_max != null && salary_min > salary_max) {
+      return res.status(400).json({ message: "salary_min cannot be greater than salary_max" });
     }
 
     const job = await createJob(employerId, {
@@ -29,6 +32,8 @@ export const postJob = async (req, res) => {
       location,
       industry,
       salary,
+      salary_min: salary_min ?? null,
+      salary_max: salary_max ?? null,
       job_type,
       deadline,
     });
@@ -47,22 +52,26 @@ export const postJob = async (req, res) => {
 export const updateJob = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, location, industry, salary, job_type, deadline } = req.body;
+    const { title, description, location, industry, salary, salary_min, salary_max, job_type, deadline } = req.body;
 
-    // Check if job exists
     const job = await findJobById(id);
     if (!job) {
       return res.status(404).json({ message: "Job listing not found" });
     }
 
-    // Check if the logged in employer owns this job
     if (job.employer_id !== req.user.id) {
       return res.status(403).json({ message: "You are not authorized to update this job listing" });
     }
 
-    // Validate job_type if provided
     if (job_type && !["full-time", "part-time", "contract"].includes(job_type)) {
       return res.status(400).json({ message: "Job type must be full-time, part-time or contract" });
+    }
+
+    const resolvedMin = salary_min !== undefined ? salary_min : job.salary_min;
+    const resolvedMax = salary_max !== undefined ? salary_max : job.salary_max;
+
+    if (resolvedMin != null && resolvedMax != null && resolvedMin > resolvedMax) {
+      return res.status(400).json({ message: "salary_min cannot be greater than salary_max" });
     }
 
     const updatedJob = await updateJobById(id, {
@@ -70,7 +79,9 @@ export const updateJob = async (req, res) => {
       description: description || job.description,
       location: location || job.location,
       industry: industry || job.industry,
-      salary: salary || job.salary,
+      salary: salary !== undefined ? salary : job.salary,
+      salary_min: resolvedMin,
+      salary_max: resolvedMax,
       job_type: job_type || job.job_type,
       deadline: deadline || job.deadline,
     });
@@ -90,13 +101,11 @@ export const deleteJob = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if job exists
     const job = await findJobById(id);
     if (!job) {
       return res.status(404).json({ message: "Job listing not found" });
     }
 
-    // Check if the logged in employer owns this job
     if (job.employer_id !== req.user.id) {
       return res.status(403).json({ message: "You are not authorized to delete this job listing" });
     }
@@ -113,28 +122,96 @@ export const deleteJob = async (req, res) => {
 // GET /api/jobs
 export const getJobs = async (req, res) => {
   try {
-    const { keyword, location, industry, job_type } = req.query;
+    const {
+      title,
+      keyword,
+      location,
+      industry,
+      job_type,
+      min_salary,
+      max_salary,
+      posted_after,
+      posted_before,
+      posted_on,
+    } = req.query;
+    const { page, limit, offset } = parsePagination(req.query);
 
-    // If any filter is provided, use search, otherwise get all jobs
-    let jobs;
-    if (keyword || location || industry || job_type) {
-      jobs = await searchJobs({ keyword, location, industry, job_type });
-    } else {
-      jobs = await findAllJobs();
+    if (min_salary !== undefined && max_salary !== undefined && Number(min_salary) > Number(max_salary)) {
+      return res.status(400).json({ message: "min_salary cannot be greater than max_salary" });
     }
 
-    if (!jobs || jobs.length === 0) {
-      return res.status(404).json({ message: "No job listings found" });
+    if (posted_after && posted_before && posted_after > posted_before) {
+      return res.status(400).json({ message: "posted_after cannot be after posted_before" });
     }
+
+    const hasFilters =
+      title ||
+      keyword ||
+      location ||
+      industry ||
+      job_type ||
+      min_salary !== undefined ||
+      max_salary !== undefined ||
+      posted_after ||
+      posted_before ||
+      posted_on;
+
+    const { rows, total } = hasFilters
+      ? await searchJobs(
+          {
+            title,
+            keyword,
+            location,
+            industry,
+            job_type,
+            min_salary: min_salary !== undefined ? Number(min_salary) : undefined,
+            max_salary: max_salary !== undefined ? Number(max_salary) : undefined,
+            posted_after,
+            posted_before,
+            posted_on,
+          },
+          { limit, offset }
+        )
+      : await findAllJobs({ limit, offset });
 
     res.status(200).json({
       message: "Job listings retrieved successfully",
-      count: jobs.length,
-      jobs,
+      pagination: buildPagination(total, page, limit),
+      jobs: rows,
     });
   } catch (error) {
     console.error("Get jobs error:", error.message);
     res.status(500).json({ message: "Server error getting job listings" });
+  }
+};
+
+// GET /api/jobs/search
+export const searchJobsList = async (req, res) => {
+  try {
+    const { title, location, min_salary, max_salary, posted_after, posted_before, posted_on } = req.query;
+    const { page, limit, offset } = parsePagination(req.query);
+
+    const { rows, total } = await searchJobs(
+      {
+        title,
+        location,
+        min_salary: min_salary !== undefined ? Number(min_salary) : undefined,
+        max_salary: max_salary !== undefined ? Number(max_salary) : undefined,
+        posted_after,
+        posted_before,
+        posted_on,
+      },
+      { limit, offset }
+    );
+
+    res.status(200).json({
+      message: "Job search completed successfully",
+      pagination: buildPagination(total, page, limit),
+      jobs: rows,
+    });
+  } catch (error) {
+    console.error("Search jobs error:", error.message);
+    res.status(500).json({ message: "Server error searching job listings" });
   }
 };
 

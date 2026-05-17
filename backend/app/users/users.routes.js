@@ -12,6 +12,7 @@ import { protect, restrictTo } from "../core/middleware.js";
 import {
   updateMeValidator,
   changePasswordValidator,
+  paginationQueryValidator,
 } from "../core/validators.js";
 
 const router = express.Router();
@@ -23,7 +24,7 @@ router.put("/me/password", protect, changePasswordValidator, changePassword);
 router.delete("/me", protect, deleteMe);
 
 // ─── Admin Routes ─────────────────────────────────────────────
-router.get("/", protect, restrictTo("admin"), getUsers);
+router.get("/", protect, restrictTo("admin"), paginationQueryValidator, getUsers);
 router.delete("/:id", protect, restrictTo("admin"), deleteUser);
 
 // ─── Public Profile Routes ────────────────────────────────────

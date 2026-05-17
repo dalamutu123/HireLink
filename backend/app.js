@@ -4,6 +4,7 @@ import authRoutes from "./app/auth/auth.routes.js";
 import userRoutes from "./app/users/users.routes.js";
 import jobRoutes from "./app/jobs/jobs.routes.js";
 import applicationRoutes from "./app/applications/applications.routes.js";
+import applyRoutes from "./app/applications/apply.routes.js";
 import { notFound, errorHandler } from "./app/core/errorHandler.js";
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/apply", applyRoutes);
 app.use("/api/applications", applicationRoutes);
 
 app.get("/", (req, res) => {
