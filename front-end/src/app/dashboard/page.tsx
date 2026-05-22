@@ -14,19 +14,19 @@ export default function Dashboard() {
         </p>
       </div>
       <div className="grid md:grid-cols-3 gap-6 mb-10">
-        <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl border border-indigo-100/50 shadow-sm">
+        <div className="bg-linear-to-br from-indigo-50 to-white p-6 rounded-2xl border border-indigo-100/50 shadow-sm">
           <h3 className="text-indigo-600/80 font-medium text-sm">
             Applications Sent
           </h3>
           <p className="text-4xl font-bold mt-2 text-indigo-900">24</p>
         </div>
 
-        <div className="bg-gradient-to-br from-cyan-50 to-white p-6 rounded-2xl border border-cyan-100/50 shadow-sm">
+        <div className="bg-linear-to-br from-cyan-50 to-white p-6 rounded-2xl border border-cyan-100/50 shadow-sm">
           <h3 className="text-cyan-700/80 font-medium text-sm">Interviews</h3>
           <p className="text-4xl font-bold mt-2 text-cyan-900">8</p>
         </div>
 
-        <div className="bg-gradient-to-br from-rose-50 to-white p-6 rounded-2xl border border-rose-100/50 shadow-sm">
+        <div className="bg-linear-to-br from-rose-50 to-white p-6 rounded-2xl border border-rose-100/50 shadow-sm">
           <h3 className="text-rose-600/80 font-medium text-sm">Saved Jobs</h3>
           <p className="text-4xl font-bold mt-2 text-rose-900">12</p>
         </div>
