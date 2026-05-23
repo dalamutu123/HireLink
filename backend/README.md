@@ -1,23 +1,26 @@
 # HireLink Backend
 
-REST API for the HireLink job board platform. Connects employers with job seekers through authentication, profiles, job listings, applications, search, and filtering.
+REST API for the HireLink job board platform — authentication, profiles, job listings, search & filtering, applications, and pagination.
+
+**Base URL:** `http://localhost:5000` (default)
 
 ---
 
 ## Capabilities Overview
 
-| Feature | Endpoints | Notes |
+| Feature | Endpoints | Details |
 | :--- | :--- | :--- |
-| **Authentication** | `/api/auth/*` | Register, login, logout, forgot/reset password (JWT, 7-day expiry) |
-| **User profiles** | `/api/users/*` | Jobseeker & employer profiles, password change, admin user management |
-| **Job listings** | `/api/jobs/*` | CRUD (employer), list & view (authenticated) |
-| **Job search** | `GET /api/jobs/search` | Search by title, location, salary range, date posted |
-| **Job filtering** | `GET /api/jobs` | Filter by title, location, industry, job type, salary range, date posted |
-| **Salary range** | POST/PUT jobs + search filters | `salary_min` / `salary_max` on listings; `min_salary` / `max_salary` when searching |
-| **Applications** | `/api/apply`, `/api/applications/*` | Apply, list, withdraw, employer review, accept/reject |
-| **Pagination** | All list endpoints | `page` & `limit` query params on jobs, applications, users |
+| **Authentication** | `/api/auth/*` | Register, login, logout, forgot/reset password · JWT (7-day expiry) |
+| **User profiles** | `/api/users/*` | Jobseeker & employer profiles, password change, admin user list |
+| **Job CRUD** | `/api/jobs` | Create, read, update, delete listings (employer) |
+| **Job search** | `GET /api/jobs/search` | Title, location, salary range, **date posted** |
+| **Job filtering** | `GET /api/jobs` | All search filters + industry & job type |
+| **Salary range** | POST/PUT + filters | `salary_min` / `salary_max` on listings · `min_salary` / `max_salary` when querying |
+| **Date posted** | Search & filter | `posted_on`, `posted_after`, `posted_before` (`created_at`) |
+| **Applications** | `/api/apply`, `/api/applications` | Apply, list, withdraw, employer review, accept/reject |
+| **Pagination** | All list endpoints | `page` (default `1`) · `limit` (default `10`, max `100`) |
 
-**Roles:** `jobseeker`, `employer`, `admin`
+**Roles:** `jobseeker` · `employer` · `admin`
 
 ---
 
@@ -28,7 +31,7 @@ REST API for the HireLink job board platform. Connects employers with job seeker
 | Runtime | Node.js (ES modules) |
 | Framework | Express 5 |
 | Database | PostgreSQL (`pg`) |
-| Auth | JWT (`jsonwebtoken`) + bcrypt |
+| Auth | JWT + bcrypt |
 | Validation | express-validator |
 | Email | Nodemailer (Gmail) |
 
@@ -38,23 +41,23 @@ REST API for the HireLink job board platform. Connects employers with job seeker
 
 ```
 backend/
-├── app.js                              # Mounts all /api routes
+├── app.js
 ├── package.json
 └── app/
-    ├── auth/                           # Register, login, password reset
-    ├── users/                          # Profiles, admin user management
+    ├── auth/
+    ├── users/
     ├── jobs/                           # CRUD, search, filter
     ├── applications/
     │   ├── apply.routes.js             # POST /api/apply/:job_id
-    │   ├── applications.routes.js      # List, withdraw, employer view, PATCH status
+    │   ├── applications.routes.js
     │   ├── applications.controller.js
     │   ├── applications.model.js
-    │   └── applications.utils.js       # Maps jobseeker_id → user_id in responses
+    │   └── applications.utils.js       # jobseeker_id → user_id in API
     └── core/
         ├── db.js
-        ├── middleware.js               # JWT + role-based access (protect, restrictTo)
+        ├── middleware.js               # protect, restrictTo
         ├── validators.js
-        ├── pagination.js               # Shared page/limit parsing
+        ├── pagination.js
         ├── errorHandler.js
         ├── email.js
         ├── init.sql
@@ -70,16 +73,18 @@ backend/
 ### Prerequisites
 
 - Node.js 18+
-- PostgreSQL database
+- PostgreSQL
 
-### Installation
+### Install & run
 
 ```bash
 cd backend
 npm install
+npm run dev          # development
+# npm start          # production
 ```
 
-### Database Setup
+### Database
 
 **New database:**
 
@@ -87,16 +92,16 @@ npm install
 psql -d your_database_name -f app/core/init.sql
 ```
 
-**Existing database** — run migrations as needed:
+**Upgrade existing database:**
 
 ```bash
 psql -d your_database_name -f app/core/migrations/001_applied_status.sql
 psql -d your_database_name -f app/core/migrations/002_salary_range.sql
 ```
 
-### Environment Variables
+### Environment variables
 
-Create a `.env` file in the `backend/` directory:
+Create `backend/.env`:
 
 ```env
 PORT=5000
@@ -108,49 +113,47 @@ EMAIL_USER=your_gmail@gmail.com
 EMAIL_PASS=your_gmail_app_password
 ```
 
-### Run the Server
+| Variable | Description |
+| :--- | :--- |
+| `PORT` | Server port (default `5000`) |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | JWT signing secret |
+| `CLIENT_URL` | Frontend URL (password reset links) |
+| `EMAIL_USER` / `EMAIL_PASS` | Gmail credentials for reset emails |
+| `NODE_ENV` | Set `development` to include error stacks |
 
-```bash
-npm start        # production
-npm run dev      # development (nodemon)
-```
-
-Health check: `GET /` → `API running`
+**Health check:** `GET /` → `API running`
 
 ---
 
 ## Authentication
 
-Protected routes require:
+Include on protected routes:
 
-```
+```http
 Authorization: Bearer <token>
 ```
 
-Tokens are issued on register/login, valid for **7 days**.
+Tokens are returned from `POST /api/auth/register` and `POST /api/auth/login`. Valid for **7 days**.
 
 ---
 
 ## Pagination
 
-All list endpoints accept optional query parameters:
+Optional on every list endpoint:
 
 | Param | Default | Max |
 | :--- | :--- | :--- |
 | `page` | `1` | — |
 | `limit` | `10` | `100` |
 
-**Paginated endpoints:**
-
-| Endpoint | Who |
+| Endpoint | Access |
 | :--- | :--- |
 | `GET /api/jobs` | Authenticated |
 | `GET /api/jobs/search` | Authenticated |
 | `GET /api/applications` | Jobseeker |
 | `GET /api/applications/job/:job_id` | Employer (job owner) |
 | `GET /api/users` | Admin |
-
-**Response shape** (all paginated lists):
 
 ```json
 {
@@ -167,33 +170,43 @@ All list endpoints accept optional query parameters:
 }
 ```
 
-Empty results return `200` with an empty array and `"total": 0`.
+Empty pages return `200` with `"total": 0` and an empty array.
 
 ---
 
 ## API Route Map
 
-| Prefix | Purpose |
-| :--- | :--- |
-| `/api/auth` | Authentication (public) |
-| `/api/users` | Profiles & admin |
-| `/api/jobs` | Job listings, search, filter |
-| `/api/apply` | Submit application |
-| `/api/applications` | Application management |
+| Prefix | Auth | Purpose |
+| :--- | :--- | :--- |
+| `/api/auth` | Public | Register, login, password reset |
+| `/api/users` | JWT | Profiles, admin |
+| `/api/jobs` | JWT | Jobs, search, filter |
+| `/api/apply` | JWT | Submit application |
+| `/api/applications` | JWT | Manage applications |
 
 ---
 
 ## API Reference
 
-### Auth — `/api/auth` (public)
+### Auth — `/api/auth`
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/register` | Register as `jobseeker`, `employer`, or `admin` → JWT + user |
-| `POST` | `/login` | Login → JWT + user |
-| `POST` | `/logout` | Logout acknowledgment |
-| `POST` | `/forgot-password` | Send reset email |
-| `POST` | `/reset-password` | Reset with `token` + `newPassword` |
+| Method | Endpoint | Body | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/register` | `name`, `email`, `password`, `role` | Register → JWT + user |
+| `POST` | `/login` | `email`, `password` | Login → JWT + user |
+| `POST` | `/logout` | — | Logout acknowledgment |
+| `POST` | `/forgot-password` | `email` | Send reset link (15 min) |
+| `POST` | `/reset-password` | `token`, `newPassword` | Reset password |
+
+```json
+// POST /api/auth/register
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "securepass123",
+  "role": "jobseeker"
+}
+```
 
 ---
 
@@ -201,13 +214,17 @@ Empty results return `200` with an empty array and `"total": 0`.
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/me` | Authenticated | Current user + profile |
-| `PUT` | `/me` | Authenticated | Update profile |
-| `PUT` | `/me/password` | Authenticated | Change password |
-| `DELETE` | `/me` | Authenticated | Delete own account |
-| `GET` | `/` | Admin | List all users (paginated) |
+| `GET` | `/me` | JWT | Current user + profile |
+| `PUT` | `/me` | JWT | Update account & profile |
+| `PUT` | `/me/password` | JWT | `currentPassword`, `newPassword` |
+| `DELETE` | `/me` | JWT | Delete own account |
+| `GET` | `/` | Admin | List users (paginated) |
 | `DELETE` | `/:id` | Admin | Delete user |
-| `GET` | `/:id` | Authenticated | Public jobseeker/employer profile |
+| `GET` | `/:id` | JWT | Public jobseeker/employer profile |
+
+**Jobseeker profile fields:** `bio`, `skills`, `experience`, `resume_url`, `location`
+
+**Employer profile fields:** `company_name`, `company_description`, `industry`, `website`, `location`
 
 ---
 
@@ -215,36 +232,60 @@ Empty results return `200` with an empty array and `"total": 0`.
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/search` | Authenticated | **Search** by title, location, salary (paginated) |
-| `GET` | `/` | Authenticated | List all jobs or **filter** via query params (paginated) |
-| `GET` | `/:id` | Authenticated | Single job details |
-| `POST` | `/` | Employer | Create job listing |
-| `PUT` | `/:id` | Employer (owner) | Update job listing |
-| `DELETE` | `/:id` | Employer (owner) | Delete job listing |
+| `GET` | `/search` | JWT | Search (requires ≥1 filter param) |
+| `GET` | `/` | JWT | List all or filter |
+| `GET` | `/:id` | JWT | Single job |
+| `POST` | `/` | Employer | Create listing |
+| `PUT` | `/:id` | Employer (owner) | Update listing |
+| `DELETE` | `/:id` | Employer (owner) | Delete listing |
 
-#### Search jobs — `GET /api/jobs/search`
+#### Create job — required fields
 
-Dedicated search endpoint. Requires at least one of: `title`, `location`, `min_salary`, `max_salary`, `posted_after`, `posted_before`, `posted_on`.
+| Field | Required | Values / notes |
+| :--- | :--- | :--- |
+| `title` | Yes | |
+| `description` | Yes | |
+| `location` | Yes | |
+| `industry` | Yes | |
+| `job_type` | Yes | `full-time`, `part-time`, `contract` |
+| `salary_min` | No | Integer — enables salary filtering |
+| `salary_max` | No | Integer |
+| `salary` | No | Display string |
+| `deadline` | No | ISO date |
+
+---
+
+#### Search — `GET /api/jobs/search`
+
+Requires **at least one** of: `title`, `location`, `min_salary`, `max_salary`, `posted_after`, `posted_before`, `posted_on`.
 
 ```http
-GET /api/jobs/search?title=engineer&location=toronto&posted_after=2026-05-01&page=1&limit=10
+GET /api/jobs/search?title=engineer&location=toronto&min_salary=50000&max_salary=100000&posted_after=2026-05-01&page=1&limit=10
 Authorization: Bearer <token>
 ```
 
 | Param | Description |
 | :--- | :--- |
-| `title` | Partial match on job title (case-insensitive) |
-| `location` | Partial match on location (case-insensitive) |
-| `min_salary` | Jobs whose range reaches at least this amount |
-| `max_salary` | Jobs whose starting salary is at most this amount |
-| `posted_after` | Jobs posted on or after this date (`YYYY-MM-DD`) |
-| `posted_before` | Jobs posted on or before this date (`YYYY-MM-DD`) |
-| `posted_on` | Jobs posted on this exact date (`YYYY-MM-DD`) |
+| `title` | Partial match on title (case-insensitive) |
+| `location` | Partial match on location |
+| `min_salary` | Job range reaches at least this amount |
+| `max_salary` | Job starting salary is at most this amount |
+| `posted_on` | Posted on exact date (`YYYY-MM-DD`) |
+| `posted_after` | Posted on or after date |
+| `posted_before` | Posted on or before date |
 | `page`, `limit` | Pagination |
 
-**Date posted** filters use the job's `created_at` timestamp. Use `posted_on` for a single day, or `posted_after` / `posted_before` for a range.
+**Date posted** uses `jobs.created_at`. For a single day use `posted_on`; for a range use `posted_after` + `posted_before`.
 
-**Example response:**
+```http
+# Jobs posted in May 2026
+GET /api/jobs/search?posted_after=2026-05-01&posted_before=2026-05-31
+
+# Jobs posted today
+GET /api/jobs/search?posted_on=2026-05-23
+```
+
+**Response:**
 
 ```json
 {
@@ -264,61 +305,37 @@ Authorization: Bearer <token>
       "location": "Toronto, ON",
       "salary_min": 70000,
       "salary_max": 95000,
+      "created_at": "2026-05-16T10:00:00.000Z",
       "employer_name": "Acme Corp"
     }
   ]
 }
 ```
 
-#### Filter jobs — `GET /api/jobs`
+---
 
-Same filters as search, plus additional fields. Omit all filter params to list every job.
+#### Filter — `GET /api/jobs`
 
-```http
-GET /api/jobs?title=developer&industry=technology&job_type=full-time&min_salary=60000&page=1
-Authorization: Bearer <token>
-```
+Supports **all search params** plus:
 
 | Param | Description |
 | :--- | :--- |
-| `title` | Partial match on title |
 | `keyword` | Alias for `title` |
-| `location` | Partial match on location |
-| `industry` | Partial match on industry |
-| `job_type` | Exact: `full-time`, `part-time`, `contract` |
-| `min_salary` | Salary range filter (lower bound) |
-| `max_salary` | Salary range filter (upper bound) |
-| `posted_after` | Posted on or after date (`YYYY-MM-DD`) |
-| `posted_before` | Posted on or before date (`YYYY-MM-DD`) |
-| `posted_on` | Posted on exact date (`YYYY-MM-DD`) |
-| `page`, `limit` | Pagination |
+| `industry` | Partial match |
+| `job_type` | `full-time`, `part-time`, `contract` |
 
-#### Salary range
+Omit all filters to return every job (paginated).
 
-**On job listings** (POST/PUT) — stored for filtering:
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `salary_min` | integer | Lower bound (e.g. `60000`) |
-| `salary_max` | integer | Upper bound (e.g. `90000`) |
-| `salary` | string | Optional display text (e.g. `"$60k–$90k"`) |
-
-**When searching/filtering** — overlap logic: a job matches if its `[salary_min, salary_max]` overlaps the requested range. Jobs without `salary_min` are excluded when a salary filter is used.
-
-**Create job example:**
-
-```json
-{
-  "title": "Software Engineer",
-  "description": "...",
-  "location": "Toronto",
-  "industry": "Technology",
-  "job_type": "full-time",
-  "salary_min": 70000,
-  "salary_max": 95000,
-  "salary": "$70,000 - $95,000"
-}
+```http
+GET /api/jobs?industry=technology&job_type=full-time&posted_after=2026-05-01&page=1
+Authorization: Bearer <token>
 ```
+
+#### Salary range logic
+
+- **Listings:** set `salary_min` and `salary_max` when creating/updating a job.
+- **Filtering:** job matches if its `[salary_min, salary_max]` overlaps the requested range.
+- Jobs without `salary_min` are **excluded** when `min_salary` or `max_salary` is used.
 
 ---
 
@@ -326,7 +343,7 @@ Authorization: Bearer <token>
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/:job_id` | Jobseeker | Apply for a job |
+| `POST` | `/:job_id` | Jobseeker | Submit application |
 
 Alias: `POST /api/applications/:jobId`
 
@@ -338,8 +355,6 @@ Content-Type: application/json
 { "cover_letter": "I am interested in this role." }
 ```
 
-**Response (`201`):**
-
 ```json
 {
   "message": "Application submitted successfully",
@@ -347,47 +362,49 @@ Content-Type: application/json
     "id": 1,
     "job_id": 5,
     "user_id": 12,
-    "status": "applied"
+    "status": "applied",
+    "applied_at": "2026-05-16T10:00:00.000Z"
   }
 }
 ```
+
+Duplicate applications → `409`.
 
 ---
 
 ### Applications — `/api/applications`
 
-#### Application model (API response)
+#### Model (API response)
 
 | Field | Description |
 | :--- | :--- |
 | `id` | Application ID |
 | `job_id` | Job listing ID |
-| `user_id` | Jobseeker who applied (`jobseeker_id` in DB) |
-| `status` | `applied` → `accepted` or `rejected` |
+| `user_id` | Applicant (`jobseeker_id` in DB) |
+| `status` | `applied` · `accepted` · `rejected` |
 | `cover_letter` | Optional |
-| `applied_at` | Timestamp |
+| `applied_at` | Submission timestamp |
 
 #### Workflow
 
 ```
-Jobseeker                    Employer                         Jobseeker
-─────────                    ────────                         ─────────
-POST /api/apply/:job_id  →   GET /applications/job/:id   →   GET /api/applications
-status: applied              PATCH /:id/status                 sees accepted/rejected
-                             { "status": "accepted" }
+Jobseeker                         Employer                          Jobseeker
+POST /api/apply/:job_id      →    GET /applications/job/:id    →    GET /api/applications
+(status: applied)                 PATCH /:id/status                  (sees accepted/rejected)
+                                  { "status": "accepted" }
 ```
 
 #### Endpoints
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/` | Jobseeker | List user's applications (paginated, includes status updates) |
+| `GET` | `/` | Jobseeker | My applications (paginated) |
 | `GET` | `/me` | Jobseeker | Alias for `GET /` |
 | `DELETE` | `/:id` | Jobseeker (owner) | Withdraw (only while `applied`) |
-| `GET` | `/job/:job_id` | Employer (job owner) | View applicants + profiles (paginated) |
-| `PATCH` | `/:id/status` | Employer (job owner) | Accept or reject |
+| `GET` | `/job/:job_id` | Employer (owner) | Applicants + profiles (paginated) |
+| `PATCH` | `/:id/status` | Employer (owner) | Accept or reject |
 
-#### List user's applications
+#### List my applications
 
 ```http
 GET /api/applications?page=1&limit=10
@@ -418,9 +435,9 @@ GET /api/applications/job/5?page=1
 Authorization: Bearer <token>
 ```
 
-Returns applicant profiles: `jobseeker_name`, `jobseeker_email`, `bio`, `skills`, `experience`, `resume_url`, `location`.
+Includes: `jobseeker_name`, `jobseeker_email`, `bio`, `skills`, `experience`, `resume_url`, `location`.
 
-#### Accept or reject
+#### Accept / reject
 
 ```http
 PATCH /api/applications/1/status
@@ -432,41 +449,47 @@ Content-Type: application/json
 
 | Rule | Detail |
 | :--- | :--- |
-| Allowed values | `accepted`, `rejected` only |
+| Values | `accepted` or `rejected` only |
 | Current status | Must be `applied` |
-| Authorization | Employer must own the job |
-
-Jobseeker sees the updated status on `GET /api/applications`.
+| Auth | Employer must own the job |
 
 ---
 
 ## Database Schema
 
-| Table | Purpose |
+| Table | Key columns |
 | :--- | :--- |
-| `users` | Accounts: `name`, `email`, `password`, `role` |
+| `users` | `name`, `email`, `password`, `role` |
 | `jobseeker_profiles` | `bio`, `skills`, `experience`, `resume_url`, `location` |
 | `employer_profiles` | `company_name`, `company_description`, `industry`, `website`, `location` |
-| `jobs` | Listings with `salary_min`, `salary_max`, `job_type`, etc. |
-| `applications` | `job_id`, `jobseeker_id`, `status`, `cover_letter` |
-| `password_reset_tokens` | 15-minute expiry |
+| `jobs` | `title`, `description`, `location`, `industry`, `job_type`, `salary_min`, `salary_max`, `created_at` |
+| `applications` | `job_id`, `jobseeker_id`, `status`, `cover_letter`, `applied_at` |
+| `password_reset_tokens` | `token`, `expires_at` (15 min) |
 
-**Application statuses:** `applied` (default) · `accepted` · `rejected`
-
-On registration, an empty profile is created automatically for `jobseeker` and `employer` roles.
+- Application statuses: `applied` (default) → `accepted` / `rejected`
+- `UNIQUE(job_id, jobseeker_id)` on applications
+- Empty profile row created on register for `jobseeker` and `employer`
 
 ---
 
 ## Error Handling
 
-| Condition | Status |
+| Condition | HTTP |
 | :--- | :--- |
 | Route not found | 404 |
-| Duplicate record (`23505`) | 409 |
-| Foreign key violation (`23503`) | 400 |
-| Invalid ID format (`22P02`) | 400 |
-| Invalid/expired JWT | 401 |
-| Validation failure | 400 (field-level `errors` array) |
+| Validation failed | 400 + `errors[]` |
+| Unauthorized / bad JWT | 401 |
+| Forbidden (wrong role/owner) | 403 |
+| Not found | 404 |
+| Duplicate record | 409 |
+| Server error | 500 |
+
+```json
+{
+  "message": "Validation failed",
+  "errors": [{ "field": "posted_after", "message": "posted_after must be a valid date (YYYY-MM-DD)" }]
+}
+```
 
 ---
 
@@ -474,8 +497,8 @@ On registration, an empty profile is created automatically for `jobseeker` and `
 
 | Command | Description |
 | :--- | :--- |
-| `npm start` | `node app.js` |
-| `npm run dev` | Nodemon hot reload |
+| `npm start` | Run `node app.js` |
+| `npm run dev` | Run with nodemon |
 
 ---
 
@@ -483,5 +506,5 @@ On registration, an empty profile is created automatically for `jobseeker` and `
 
 - Email notifications on application status changes
 - In-app notification system
-- Resume file upload (only `resume_url` text field)
-- Dedicated admin dashboard beyond user management
+- Resume file upload (`resume_url` text only)
+- Admin dashboard beyond user management
