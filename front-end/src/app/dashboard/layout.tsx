@@ -79,7 +79,7 @@ function DashboardLayoutContent({
           items: [
             {
               name: "Applicants",
-              href: "/dashboard/jobs/applicants",
+              href: "/dashboard/applicants",
               icon: Users,
               description: "Review and manage job seeker applications.",
             },
