@@ -35,3 +35,17 @@ export const findNotificationsByUser = async (userId, { limit, offset }) => {
 
   return { rows: result.rows, total };
 };
+
+// All active (non-expired) notifications for a user — max 100, expires after 24h
+export const findAllActiveNotificationsByUser = async (userId) => {
+  const result = await pool.query(
+    `SELECT id, user_id, type, message, read, expires_at, created_at
+     FROM notifications
+     WHERE user_id = $1 AND expires_at > NOW()
+     ORDER BY created_at DESC
+     LIMIT 100`,
+    [userId]
+  );
+
+  return result.rows;
+};

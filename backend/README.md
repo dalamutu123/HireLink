@@ -157,7 +157,8 @@ Optional on every list endpoint:
 | `GET /api/jobs/search` | Authenticated |
 | `GET /api/applications` | Jobseeker |
 | `GET /api/applications/job/:job_id` | Employer (job owner) |
-| `GET /api/notifications` | Jobseeker, Employer |
+| `GET /api/notifications` | Jobseeker, Employer (paginated) |
+| `GET /api/all_notifications` | Jobseeker, Employer (all active) |
 | `GET /api/users` | Admin |
 
 ```json
@@ -188,7 +189,8 @@ Empty pages return `200` with `"total": 0` and an empty array.
 | `/api/jobs` | JWT | Jobs, search, filter |
 | `/api/apply` | JWT | Submit application |
 | `/api/applications` | JWT | Manage applications |
-| `/api/notifications` | JWT | Jobseeker & employer notifications |
+| `/api/notifications` | JWT | Notifications (paginated + `/all`) |
+| `/api/all_notifications` | JWT | All active notifications (24h expiry) |
 
 ---
 
@@ -477,7 +479,34 @@ In-app notifications expire after **24 hours**. Email requires `EMAIL_USER` / `E
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/` | Jobseeker, Employer | List your active notifications (paginated) |
+| `GET` | `/all` | Jobseeker, Employer | All active notifications (expire after 24h, max 100) |
+| `GET` | `/` | Jobseeker, Employer | List notifications (paginated) |
+
+Alias: `GET /api/all_notifications` (same as `/api/notifications/all`).
+
+```http
+GET /api/all_notifications
+Authorization: Bearer <token>
+```
+
+```json
+{
+  "message": "All active notifications retrieved successfully",
+  "count": 2,
+  "notifications": [
+    {
+      "id": 1,
+      "type": "new_application",
+      "message": "Jane Doe applied for your job posting \"Software Engineer\".",
+      "read": false,
+      "expires_at": "2026-05-24T10:00:00.000Z",
+      "created_at": "2026-05-23T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+Paginated version:
 
 ```http
 GET /api/notifications?page=1&limit=10

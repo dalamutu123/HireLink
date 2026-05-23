@@ -1,5 +1,24 @@
-import { findNotificationsByUser } from "./notifications.model.js";
+import {
+  findNotificationsByUser,
+  findAllActiveNotificationsByUser,
+} from "./notifications.model.js";
 import { parsePagination, buildPagination } from "../core/pagination.js";
+
+// GET /api/notifications/all  |  GET /api/all_notifications
+export const getAllNotifications = async (req, res) => {
+  try {
+    const notifications = await findAllActiveNotificationsByUser(req.user.id);
+
+    res.status(200).json({
+      message: "All active notifications retrieved successfully",
+      count: notifications.length,
+      notifications,
+    });
+  } catch (error) {
+    console.error("Get all notifications error:", error.message);
+    res.status(500).json({ message: "Server error getting notifications" });
+  }
+};
 
 // GET /api/notifications
 export const getMyNotifications = async (req, res) => {
