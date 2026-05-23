@@ -369,10 +369,10 @@ function JobsPageContent() {
         </div>
 
         {filteredJobs.length === 0 ? (
-          <div className="flex-grow flex flex-col items-center justify-center text-center max-w-md mx-auto py-12 space-y-4">
+          <div className="grow flex flex-col items-center justify-center text-center max-w-md mx-auto py-12 space-y-4">
             <div className="relative w-64 h-48">
               <div className="absolute inset-0 bg-indigo-50/50 rounded-2xl flex items-center justify-center text-slate-300">
-                <Briefcase size={64} className="stroke-[1]" />
+                <Briefcase size={64} className="stroke-1" />
               </div>
             </div>
             <div className="space-y-1">

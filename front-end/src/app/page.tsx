@@ -68,9 +68,9 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
         {/* Background Gradients */}
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-50 via-white to-cyan-50 -z-10" />
-        <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[800px] h-[800px] bg-indigo-100/40 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[600px] h-[600px] bg-cyan-100/40 rounded-full blur-3xl -z-10" />
+        <div className="absolute top-0 left-0 w-full h-full bg-linear-to-br from-indigo-50 via-white to-cyan-50 -z-10" />
+        <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-200 h-200 bg-indigo-100/40 rounded-full blur-3xl -z-10" />
+        <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-150 h-150 bg-cyan-100/40 rounded-full blur-3xl -z-10" />
 
         <div className="max-w-7xl mx-auto px-8 grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
@@ -80,7 +80,7 @@ export default function HomePage() {
           >
             <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 mb-6 leading-tight">
               Find Work That <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-cyan-500">
                 Fits Your Life
               </span>
             </h1>
@@ -126,7 +126,7 @@ export default function HomePage() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative h-[400px] lg:h-[600px] w-full"
+            className="relative h-100 lg:h-150 w-full"
           >
             <Image
               src="/Job hunt-cuate.png"
@@ -153,7 +153,7 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-3 gap-8 relative">
             {/* Connecting Line */}
-            <div className="hidden md:block absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-indigo-100 via-indigo-200 to-indigo-100 -translate-y-1/2 -z-0" />
+            <div className="hidden md:block absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-linear-to-r from-indigo-100 via-indigo-200 to-indigo-100 -translate-y-1/2 z-0" />
 
             {[
               {
@@ -264,8 +264,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-8">
           <div className="bg-indigo-900 rounded-[2.5rem] p-8 md:p-16 relative overflow-hidden flex flex-col lg:flex-row items-center gap-12">
             {/* Background elements */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-500/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3" />
+            <div className="absolute top-0 right-0 w-125 h-125 bg-indigo-600/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+            <div className="absolute bottom-0 left-0 w-100 h-100 bg-cyan-500/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3" />
 
             <div className="lg:w-1/2 relative z-10 text-white">
               <h2 className="text-3xl lg:text-5xl font-bold mb-6">
