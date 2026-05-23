@@ -8,8 +8,11 @@ import {
   deleteApplication,
 } from "./applications.model.js";
 import { findJobById } from "../jobs/jobs.model.js";
+import { findUserById } from "../users/users.model.js";
 import { formatApplication, formatApplications } from "./applications.utils.js";
 import { parsePagination, buildPagination } from "../core/pagination.js";
+import { createNotification } from "../notifications/notifications.model.js";
+import { sendApplicationStatusEmail, sendNewApplicationEmail } from "../core/email.js";
 
 const getJobId = (req) => req.params.job_id || req.params.jobId;
 
@@ -32,9 +35,29 @@ export const applyForJob = async (req, res) => {
 
     const application = await createApplication(jobId, userId, cover_letter);
 
+    const jobseeker = await findUserById(userId);
+    const employer = await findUserById(job.employer_id);
+
+    const notificationMessage = `${jobseeker.name} applied for your job posting "${job.title}".`;
+
+    await createNotification(job.employer_id, "new_application", notificationMessage);
+
+    try {
+      await sendNewApplicationEmail({
+        toEmail: employer.email,
+        employerName: employer.name,
+        jobseekerName: jobseeker.name,
+        jobTitle: job.title,
+        jobId,
+      });
+    } catch (emailError) {
+      console.error("New application email error:", emailError.message);
+    }
+
     res.status(201).json({
       message: "Application submitted successfully",
       application: formatApplication(application),
+      notificationSent: true,
     });
   } catch (error) {
     console.error("Apply for job error:", error.message);
@@ -141,6 +164,31 @@ export const updateStatus = async (req, res) => {
 
     const updatedApplication = await updateApplicationStatus(id, status);
 
+    const jobseeker = await findUserById(application.jobseeker_id);
+    const employer = await findUserById(employerId);
+
+    const notificationType =
+      status === "accepted" ? "application_accepted" : "application_rejected";
+
+    const notificationMessage =
+      status === "accepted"
+        ? `Your application for "${job.title}" was accepted by ${employer.name}.`
+        : `Your application for "${job.title}" was not selected.`;
+
+    await createNotification(application.jobseeker_id, notificationType, notificationMessage);
+
+    try {
+      await sendApplicationStatusEmail({
+        toEmail: jobseeker.email,
+        jobseekerName: jobseeker.name,
+        jobTitle: job.title,
+        employerName: employer.name,
+        status,
+      });
+    } catch (emailError) {
+      console.error("Application status email error:", emailError.message);
+    }
+
     const statusMessage =
       status === "accepted"
         ? "Application accepted"
@@ -149,6 +197,7 @@ export const updateStatus = async (req, res) => {
     res.status(200).json({
       message: statusMessage,
       application: formatApplication(updatedApplication),
+      notificationSent: true,
     });
   } catch (error) {
     console.error("Update application status error:", error.message);
