@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell, UserCircle } from "lucide-react";
+import {motion} from "framer-motion";
 
 export default function Dashboard() {
   return (
@@ -14,19 +15,19 @@ export default function Dashboard() {
         </p>
       </div>
       <div className="grid md:grid-cols-3 gap-6 mb-10">
-        <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl border border-indigo-100/50 shadow-sm">
+        <div className="bg-linear-to-br from-indigo-50 to-white p-6 rounded-2xl border border-indigo-100/50 shadow-sm">
           <h3 className="text-indigo-600/80 font-medium text-sm">
             Applications Sent
           </h3>
           <p className="text-4xl font-bold mt-2 text-indigo-900">24</p>
         </div>
 
-        <div className="bg-gradient-to-br from-cyan-50 to-white p-6 rounded-2xl border border-cyan-100/50 shadow-sm">
+        <div className="bg-linear-to-br from-cyan-50 to-white p-6 rounded-2xl border border-cyan-100/50 shadow-sm">
           <h3 className="text-cyan-700/80 font-medium text-sm">Interviews</h3>
           <p className="text-4xl font-bold mt-2 text-cyan-900">8</p>
         </div>
 
-        <div className="bg-gradient-to-br from-rose-50 to-white p-6 rounded-2xl border border-rose-100/50 shadow-sm">
+        <div className="bg-linear-to-br from-rose-50 to-white p-6 rounded-2xl border border-rose-100/50 shadow-sm">
           <h3 className="text-rose-600/80 font-medium text-sm">Saved Jobs</h3>
           <p className="text-4xl font-bold mt-2 text-rose-900">12</p>
         </div>
@@ -89,6 +90,12 @@ export default function Dashboard() {
               <div className="w-full bg-slate-100 rounded-full h-2.5">
                 <div className="bg-cyan-500 h-2.5 rounded-full w-1/2"></div>
               </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="grid md:grid-cols-3 gap-6 mb-10"
+                ></motion.div>
             </div>
           </div>
         </section>

@@ -56,7 +56,7 @@ export default function about() {
 
           {/* Right Side */}
           <div className="flex justify-center">
-            <Users className="h-[300px] w-[300px] text-black" />
+            <Users className="h-75 w-75 text-black" />
           </div>
         </div>
       </section>

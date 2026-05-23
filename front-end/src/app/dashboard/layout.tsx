@@ -155,10 +155,10 @@ export default function DashboardLayout({
       {isExpanded && (
         <div className="p-4 border-t border-slate-50 whitespace-nowrap">
           <div className="flex items-center gap-3 p-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-500 flex items-center justify-center text-white font-extrabold text-sm shadow-md shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-indigo-500 to-cyan-500 flex items-center justify-center text-white font-extrabold text-sm shadow-md shrink-0">
               U
             </div>
-            <div className="min-w-0 flex-grow">
+            <div className="min-w-0 grow">
               <h4 className="text-sm font-bold text-slate-800">Profile</h4>
             </div>
           </div>
