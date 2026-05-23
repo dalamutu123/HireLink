@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import authRoutes from "./app/auth/auth.routes.js";
 import userRoutes from "./app/users/users.routes.js";
 import jobRoutes from "./app/jobs/jobs.routes.js";
@@ -11,6 +12,13 @@ import { notFound, errorHandler } from "./app/core/errorHandler.js";
 
 const app = express();
 app.use(express.json());
+
+// CORS Middleware
+app.use(cors({
+  origin: "http://localhost:3000",
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  credentials: true,
+}));
 
 // Routes
 app.use("/api/auth", authRoutes);

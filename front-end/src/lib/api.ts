@@ -1,4 +1,4 @@
-export const API_URL = "http://localhost:5001/api";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 /**
  * Helper to get the JWT token from localStorage

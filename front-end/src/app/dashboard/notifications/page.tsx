@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -61,7 +62,7 @@ export default function NotificationsPage() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
+      {/* Header section with page title */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -82,38 +83,48 @@ export default function NotificationsPage() {
         </p>
       </motion.div>
 
-      {/* Notifications Container */}
+      {/* Premium Empty State Container */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="mx-auto max-w-4xl"
       >
-        <div className="space-y-5">
-          {notifications.map((item, i) => (
-            <motion.div
-              key={i}
-              whileHover={{ y: -3 }}
-              transition={{ duration: 0.2 }}
-              className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-md"
-            >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900">
-                    {item.title}
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                    {item.message}
-                  </p>
-                </div>
-
-                <span className="text-xs whitespace-nowrap text-slate-400">
-                  {item.time}
-                </span>
+        {/* Dynamic Illustration Container */}
+        <motion.div
+          animate={isRefreshing ? {
+            scale: [1, 0.95, 1.02, 1],
+            rotate: [0, -1, 1, 0],
+          } : {}}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+          className="relative w-64 h-64 md:w-80 md:h-80 mb-6 shrink-0"
+        >
+          <Image
+            src="/illustrations/notifications/undraw_unread-messages_hdpw.svg"
+            alt="No unread messages"
+            fill
+            className="object-contain transition-opacity duration-300"
+            style={{ opacity: isRefreshing ? 0.6 : 1 }}
+            priority
+          />
+          {isRefreshing && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-indigo-50/80 backdrop-blur-sm flex items-center justify-center border border-indigo-100 shadow-md">
+                <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin" />
               </div>
-            </motion.div>
-          ))}
+            </div>
+          )}
+        </motion.div>
+
+        {/* Status Text Block */}
+        <div className="max-w-md">
+
+          <h2 className="text-2xl font-bold text-slate-900 mb-3 tracking-tight">
+            No unread notifications
+          </h2>
+          <p className="text-slate-500 leading-relaxed text-sm md:text-base mb-8">
+            You don't have any alerts at the moment. We will notify you here when employers respond to your applications or when new positions matching your profile are posted.
+          </p>
         </div>
 
         {/* Buttons */}
@@ -124,6 +135,7 @@ export default function NotificationsPage() {
           >
             Browse Job Listings
           </Link>
+
 
           <button
             onClick={handleRefresh}
