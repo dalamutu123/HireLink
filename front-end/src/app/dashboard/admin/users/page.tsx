@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useAuth } from "@/app/hooks/useAuth";
 import { apiService, User } from "@/lib/api-service";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 export default function AdminUsersPage() {
   const { user, isLoading } = useAuth();
@@ -78,23 +79,37 @@ export default function AdminUsersPage() {
     );
   }
 
-  if (users.length === 0) {
+  const hasUsers = users && users.length > 0;
+
+  if (!hasUsers) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 text-center">
-        <div className="max-w-md">
-          <Image
-            src="/illustrations/empty/Empty-cuate.png"
-            alt="No users available"
-            width={320}
-            height={240}
-            className="mx-auto"
-          />
-          <h1 className="mt-6 text-2xl font-bold text-slate-900">
-            No users found
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            The system does not contain any registered users yet.
-          </p>
+      <div className="space-y-6">
+        <DashboardHeader
+          title="User Management"
+          subtitle={
+            <>
+              Manage registered users, review roles, and maintain the system
+              directory.
+            </>
+          }
+        />
+
+        <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 text-center">
+          <div className="max-w-md">
+            <Image
+              src="/illustrations/empty/Empty-cuate.png"
+              alt="No users available"
+              width={320}
+              height={240}
+              className="mx-auto"
+            />
+            <h1 className="mt-6 text-2xl font-bold text-slate-900">
+              No users found
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              The system does not contain any registered users yet.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -102,19 +117,15 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              User Management
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Manage registered users, review roles, and maintain the system
-              directory.
-            </p>
-          </div>
-        </div>
-      </div>
+      <DashboardHeader
+        title="User Management"
+        subtitle={
+          <>
+            Manage registered users, review roles, and maintain the system
+            directory.
+          </>
+        }
+      />
 
       {error && (
         <div className="rounded-3xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700 shadow-sm">
