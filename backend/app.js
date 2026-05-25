@@ -5,9 +5,9 @@ import authRoutes from "./app/auth/auth.routes.js";
 import userRoutes from "./app/users/users.routes.js";
 import jobRoutes from "./app/jobs/jobs.routes.js";
 import applicationRoutes from "./app/applications/applications.routes.js";
-import applyRoutes from "./app/applications/apply.routes.js";
 import notificationRoutes from "./app/notifications/notifications.routes.js";
 import allNotificationRoutes from "./app/notifications/all_notifications.routes.js";
+import bookmarkRoutes from "./app/bookmarks/bookmarks.routes.js";
 import { notFound, errorHandler } from "./app/core/errorHandler.js";
 
 const app = express();
@@ -24,10 +24,10 @@ app.use(cors({
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
-app.use("/api/apply", applyRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/all_notifications", allNotificationRoutes);
+app.use("/api/bookmarks", bookmarkRoutes);
 
 app.get("/", (req, res) => {
   res.send("API running");
