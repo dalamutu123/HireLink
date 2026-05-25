@@ -5,11 +5,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Lock, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Mail, Lock, ShieldCheck, AlertCircle } from "lucide-react";
+import { apiService } from "@/lib/api-service";
+import { useAuth } from "@/app/hooks/useAuth";
 
 export default function Login() {
   const router = useRouter();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -24,15 +28,27 @@ export default function Login() {
   };
 
   // handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
     
-    // Simulate premium login auth flow
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const res = await apiService.auth.login({
+        email: form.email,
+        password: form.password,
+      });
+
+      // Login using the context
+      login(res.token, res.user);
+      
       router.push("/dashboard");
-    }, 1200);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Login failed. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -67,6 +83,18 @@ export default function Login() {
               Sign in to access your dashboard, applications, and saved jobs.
             </p>
           </div>
+
+          {/* Styled Error Alert */}
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-sm font-medium flex items-center gap-2.5"
+            >
+              <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
+              <span>{error}</span>
+            </motion.div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
