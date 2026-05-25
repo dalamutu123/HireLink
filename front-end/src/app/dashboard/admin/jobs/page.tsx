@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useAuth } from "@/app/hooks/useAuth";
 import { apiService, Job } from "@/lib/api-service";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 export default function AdminJobsPage() {
   const { user, isLoading } = useAuth();
@@ -81,21 +82,33 @@ export default function AdminJobsPage() {
 
   if (!hasJobs) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 text-center">
-        <div className="max-w-md">
-          <Image
-            src="/illustrations/empty/Empty-cuate.png"
-            alt="No jobs found"
-            width={320}
-            height={240}
-            className="mx-auto"
-          />
-          <h1 className="mt-6 text-2xl font-bold text-slate-900">
-            No jobs found.
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            There are currently no job postings in the system.
-          </p>
+      <div className="space-y-6">
+        <DashboardHeader
+          title="Job Management"
+          subtitle={
+            <>
+              Manage published jobs, review listings, and remove outdated
+              postings.
+            </>
+          }
+        />
+
+        <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 text-center">
+          <div className="max-w-md">
+            <Image
+              src="/illustrations/empty/Empty-cuate.png"
+              alt="No jobs found"
+              width={320}
+              height={240}
+              className="mx-auto"
+            />
+            <h1 className="mt-6 text-2xl font-bold text-slate-900">
+              No jobs found.
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              There are currently no job postings in the system.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -103,19 +116,15 @@ export default function AdminJobsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              Job Management
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Manage published jobs, review listings, and remove outdated
-              postings.
-            </p>
-          </div>
-        </div>
-      </div>
+      <DashboardHeader
+        title="Job Management"
+        subtitle={
+          <>
+            Manage published jobs, review listings, and remove outdated
+            postings.
+          </>
+        }
+      />
 
       {error && (
         <div className="rounded-3xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700 shadow-sm">
