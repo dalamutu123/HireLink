@@ -58,11 +58,9 @@ export default function JobDetailPage() {
           setApplications(appRes.applications);
         }
 
-        // Hydrate Bookmarked status from localStorage
-        if (typeof window !== "undefined") {
-          const savedIds = JSON.parse(localStorage.getItem("saved_job_ids") || "[]");
-          setIsSaved(savedIds.includes(Number(id)) || savedIds.includes(String(id)));
-        }
+        // Fetch Bookmarked status from backend
+        const savedIds = await apiService.bookmarks.getBookmarkedJobIds();
+        setIsSaved(savedIds.map(Number).includes(Number(id)));
       } catch (err) {
         console.error("Failed to load details payload:", err);
       } finally {
@@ -101,21 +99,23 @@ export default function JobDetailPage() {
     }
   };
 
-  // Toggle Job Bookmark in localStorage
-  const toggleSave = () => {
+  // Toggle Job Bookmark
+  const toggleSave = async () => {
     if (!id) return;
-    if (typeof window !== "undefined") {
-      const savedIds = JSON.parse(localStorage.getItem("saved_job_ids") || "[]") as (string | number)[];
-      const jobId = Number(id);
-      let updatedIds: (string | number)[];
-      if (isSaved) {
-        updatedIds = savedIds.filter((item) => Number(item) !== jobId);
-        setIsSaved(false);
+    const jobId = Number(id);
+    const wasSaved = isSaved;
+    
+    setIsSaved(!wasSaved);
+    try {
+      if (wasSaved) {
+        await apiService.bookmarks.unsaveJob(jobId);
       } else {
-        updatedIds = [...savedIds, jobId];
-        setIsSaved(true);
+        await apiService.bookmarks.saveJob(jobId);
       }
-      localStorage.setItem("saved_job_ids", JSON.stringify(updatedIds));
+      window.dispatchEvent(new Event("saved_jobs_changed"));
+    } catch (err) {
+      setIsSaved(wasSaved);
+      console.error("Failed to toggle save status:", err);
     }
   };
 

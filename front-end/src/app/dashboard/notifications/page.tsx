@@ -109,7 +109,6 @@ interface NotificationItem {
 export default function NotificationsPage() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [readIds, setReadIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -124,12 +123,6 @@ export default function NotificationsPage() {
       const response = await apiService.notifications.getAllNotifications();
       if (response && response.notifications) {
         setNotifications(response.notifications);
-      }
-      
-      // Load local read override cache from localStorage/sessionStorage
-      if (typeof window !== "undefined") {
-        const storedRead = JSON.parse(localStorage.getItem("read_notification_ids") || "[]");
-        setReadIds(storedRead.map(Number));
       }
 
       // Fetch Applications and Jobs for Smart Recommendations
@@ -182,30 +175,22 @@ export default function NotificationsPage() {
     }
   };
 
-  // Compute read / unread values based on mock/remote read status + local storage cache overrides
-  const processedNotifications = useMemo(() => {
-    return notifications.map((n) => ({
-      ...n,
-      read: n.read || readIds.includes(Number(n.id)),
-    }));
-  }, [notifications, readIds]);
-
   // Active counter metrics
   const unreadCount = useMemo(() => {
-    return processedNotifications.filter((n) => !n.read).length;
-  }, [processedNotifications]);
+    return notifications.filter((n) => !n.read).length;
+  }, [notifications]);
 
   const readCount = useMemo(() => {
-    return processedNotifications.filter((n) => n.read).length;
-  }, [processedNotifications]);
+    return notifications.filter((n) => n.read).length;
+  }, [notifications]);
 
   const priorityCount = useMemo(() => {
-    return processedNotifications.filter((n) => !!getTypeConfig(n.type).isPriority).length;
-  }, [processedNotifications]);
+    return notifications.filter((n) => !!getTypeConfig(n.type).isPriority).length;
+  }, [notifications]);
 
   // Tab, search, and date filters
   const filteredNotifications = useMemo(() => {
-    return processedNotifications.filter((n) => {
+    const filtered = notifications.filter((n) => {
       const matchesTab =
         activeTab === "all" ||
         (activeTab === "unread" && !n.read) ||
@@ -249,26 +234,39 @@ export default function NotificationsPage() {
       
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [processedNotifications, activeTab, searchTerm, dateFilter]);
+  }, [notifications, activeTab, searchTerm, dateFilter]);
 
   // Mark an individual alert as read
-  const markAsRead = (id: number) => {
-    if (readIds.includes(id)) return;
-    const updated = [...readIds, id];
-    setReadIds(updated);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("read_notification_ids", JSON.stringify(updated));
-      window.dispatchEvent(new Event('notificationsUpdated'));
+  const markAsRead = async (id: number) => {
+    const target = notifications.find(n => n.id === id);
+    if (!target || target.read) return;
+
+    // Optimistic UI update
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+    
+    try {
+      await apiService.notifications.markAsRead(id);
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
+      // Revert if failed
+      setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: false } : n));
     }
   };
 
   // Mark all notifications as read
-  const markAllAsRead = () => {
-    const allIds = notifications.map((n) => Number(n.id));
-    setReadIds(allIds);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("read_notification_ids", JSON.stringify(allIds));
-      window.dispatchEvent(new Event('notificationsUpdated'));
+  const markAllAsRead = async () => {
+    const unreadNotifs = notifications.filter((n) => !n.read);
+    if (unreadNotifs.length === 0) return;
+
+    // Optimistic UI update
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+
+    try {
+      await Promise.all(unreadNotifs.map((n) => apiService.notifications.markAsRead(n.id)));
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+      // Re-fetch to sync state if partial failure
+      loadNotifications();
     }
   };
 
@@ -276,11 +274,6 @@ export default function NotificationsPage() {
   const clearAllNotifications = () => {
     if (confirm("Are you sure you want to clear all your notifications?")) {
       setNotifications([]);
-      setReadIds([]);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("read_notification_ids", JSON.stringify([]));
-        window.dispatchEvent(new Event('notificationsUpdated'));
-      }
     }
   };
 

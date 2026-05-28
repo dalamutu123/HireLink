@@ -49,3 +49,14 @@ export const findAllActiveNotificationsByUser = async (userId) => {
 
   return result.rows;
 };
+
+export const markNotificationAsRead = async (id, userId) => {
+  const result = await pool.query(
+    `UPDATE notifications
+     SET read = true
+     WHERE id = $1 AND user_id = $2
+     RETURNING *`,
+    [id, userId]
+  );
+  return result.rows[0];
+};

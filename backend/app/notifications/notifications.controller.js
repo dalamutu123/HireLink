@@ -1,6 +1,7 @@
 import {
   findNotificationsByUser,
   findAllActiveNotificationsByUser,
+  markNotificationAsRead as markAsReadModel,
 } from "./notifications.model.js";
 import { parsePagination, buildPagination } from "../core/pagination.js";
 
@@ -34,5 +35,22 @@ export const getMyNotifications = async (req, res) => {
   } catch (error) {
     console.error("Get notifications error:", error.message);
     res.status(500).json({ message: "Server error getting notifications" });
+  }
+};
+
+// PATCH /api/notifications/:id/read
+export const markNotificationAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const notification = await markAsReadModel(id, req.user.id);
+    
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found or unauthorized" });
+    }
+
+    res.status(200).json({ message: "Notification marked as read", notification });
+  } catch (error) {
+    console.error("Mark notification as read error:", error.message);
+    res.status(500).json({ message: "Server error marking notification as read" });
   }
 };

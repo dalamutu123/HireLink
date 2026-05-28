@@ -14,7 +14,11 @@ export const getSavedJobs = async (req, res) => {
     const bookmarks = await getBookmarks(userId);
 
     if (!bookmarks || bookmarks.length === 0) {
-      return res.status(404).json({ message: "You have no saved jobs" });
+      return res.status(200).json({ 
+        message: "You have no saved jobs",
+        count: 0,
+        bookmarks: []
+      });
     }
 
     res.status(200).json({

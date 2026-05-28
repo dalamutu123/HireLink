@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { MapPin, Bookmark, Clock, DollarSign } from "lucide-react";
 import { apiService } from "@/lib/api-service";
+import { useAuth } from "@/app/providers/AuthProvider";
 
 interface JobCardProps {
   id: string | number;
@@ -77,38 +78,52 @@ export default function JobCard({
   const daysAgoText = getDaysAgo(created_at);
 
   const [isSaved, setIsSaved] = useState(false);
+  const { isAuthenticated } = useAuth();
 
-  // Hydrate saved status from localStorage
+  // Fetch saved status from backend
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedIds = JSON.parse(localStorage.getItem("saved_job_ids") || "[]");
-      setIsSaved(savedIds.includes(Number(id)) || savedIds.includes(String(id)));
-    }
-  }, [id]);
+    if (!isAuthenticated) return;
+    
+    let mounted = true;
+    apiService.bookmarks.getBookmarkedJobIds()
+      .then((savedIds) => {
+        if (mounted) {
+          setIsSaved(savedIds.map(Number).includes(Number(id)));
+        }
+      })
+      .catch(() => {
+        // Silently catch so unauthenticated or no-saved-jobs errors don't pop up in Next.js overlay
+      });
+    return () => { mounted = false; };
+  }, [id, isAuthenticated]);
 
-  // Toggle bookmark in localStorage and backend
+  // Toggle bookmark in backend
   const toggleSave = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (typeof window !== "undefined") {
-      const jobId = typeof id === "number" ? id : Number(id);
-      const wasSaved = isSaved;
-      
-      // Optimistic UI update
-      setIsSaved(!wasSaved);
-      
-      try {
-        if (wasSaved) {
-          await apiService.bookmarks.unsaveJob(jobId);
-        } else {
-          await apiService.bookmarks.saveJob(jobId);
-        }
-        window.dispatchEvent(new Event("saved_jobs_changed"));
-      } catch (err) {
-        // Revert state if something went wrong
-        setIsSaved(wasSaved);
-        console.error("Failed to sync bookmark action:", err);
+    
+    if (!isAuthenticated) {
+      // Could redirect to login or show a toast
+      return;
+    }
+    
+    const jobId = typeof id === "number" ? id : Number(id);
+    const wasSaved = isSaved;
+    
+    // Optimistic UI update
+    setIsSaved(!wasSaved);
+    
+    try {
+      if (wasSaved) {
+        await apiService.bookmarks.unsaveJob(jobId);
+      } else {
+        await apiService.bookmarks.saveJob(jobId);
       }
+      window.dispatchEvent(new Event("saved_jobs_changed"));
+    } catch (err) {
+      // Revert state if something went wrong
+      setIsSaved(wasSaved);
+      console.error("Failed to sync bookmark action:", err);
     }
   };
 

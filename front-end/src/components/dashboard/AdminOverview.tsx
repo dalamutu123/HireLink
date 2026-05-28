@@ -28,33 +28,14 @@ export default function AdminOverview() {
       try {
         setLoadingMetrics(true);
 
-        // No dedicated `metrics` service exists in `apiService`.
-        // Safely fetch totals from existing endpoints where possible.
-        const [usersRes, jobsRes] = await Promise.all([
-          apiService.users.getUsers().catch((e) => {
-            console.error("users.getUsers failed", e);
-            return null;
-          }),
-          apiService.jobs.getJobs().catch((e) => {
-            console.error("jobs.getJobs failed", e);
-            return null;
-          }),
-        ]);
+        const metricsRes = await apiService.admin.getSystemMetrics();
 
         if (!mounted) return;
 
-        const totalUsers =
-          usersRes?.pagination?.total ?? usersRes?.users?.length ?? 0;
-        const activeJobs =
-          jobsRes?.pagination?.total ?? jobsRes?.jobs?.length ?? 0;
-
-        // No system-wide applications endpoint in apiService; use placeholder 0 for now.
-        const totalApplications = 0;
-
         setMetrics({
-          totalUsers,
-          activeJobs,
-          totalApplications,
+          totalUsers: metricsRes.totalUsers || 0,
+          activeJobs: metricsRes.activeJobs || 0,
+          totalApplications: metricsRes.totalApplications || 0,
         });
       } catch (err) {
         console.error("Failed to load admin metrics", err);

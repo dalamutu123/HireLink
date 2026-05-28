@@ -1,14 +1,4 @@
 import { apiFetch, API_URL } from "./api";
-import {
-  mockJobs,
-  mockApplications,
-  mockUsers,
-  mockActivityLogs,
-  mockJobseekerActivityLogs,
-  mockEmployerActivityLogs,
-  mockAdminActivityLogs,
-  logApiFallback,
-} from "./mock-data";
 
 // ==========================================
 // TypeScript Types & Interfaces
@@ -58,7 +48,7 @@ export interface Job {
 export interface Application {
   id: number;
   job_id: number;
-  user_id: number; // mapped from db 'jobseeker_id' in formatApplication
+  user_id: number;
   status: "applied" | "accepted" | "rejected";
   cover_letter: string | null;
   applied_at: string;
@@ -98,9 +88,6 @@ const BASE_URL = API_URL.replace(/\/api$/, "") || "http://localhost:5001";
 // ==========================================
 
 export const apiService = {
-  /**
-   * Health Check Services (Database-free)
-   */
   health: {
     check: async (timeoutMs: number = 5000): Promise<boolean> => {
       const controller = new AbortController();
@@ -119,604 +106,131 @@ export const apiService = {
     },
   },
 
-  /**
-   * Authentication Services
-   */
   auth: {
-    register: async (
-      body: Record<string, any>,
-    ): Promise<{ message: string; token: string; user: User }> => {
-      return apiFetch("/auth/register", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+    register: async (body: Record<string, any>): Promise<{ message: string; token: string; user: User }> => {
+      return apiFetch("/auth/register", { method: "POST", body: JSON.stringify(body) });
     },
-
-    login: async (
-      body: Record<string, any>,
-    ): Promise<{ message: string; token: string; user: User }> => {
-      return apiFetch("/auth/login", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+    login: async (body: Record<string, any>): Promise<{ message: string; token: string; user: User }> => {
+      return apiFetch("/auth/login", { method: "POST", body: JSON.stringify(body) });
     },
-
     logout: async (): Promise<{ message: string }> => {
-      return apiFetch("/auth/logout", {
-        method: "POST",
-      });
+      return apiFetch("/auth/logout", { method: "POST" });
     },
-
     forgotPassword: async (email: string): Promise<{ message: string }> => {
-      return apiFetch("/auth/forgot-password", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
+      return apiFetch("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) });
     },
-
-    resetPassword: async (
-      body: Record<string, any>,
-    ): Promise<{ message: string }> => {
-      return apiFetch("/auth/reset-password", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+    resetPassword: async (body: Record<string, any>): Promise<{ message: string }> => {
+      return apiFetch("/auth/reset-password", { method: "POST", body: JSON.stringify(body) });
     },
   },
 
-  /**
-   * User & Profile Services
-   */
   users: {
-    getMe: async (): Promise<{
-      user: JobseekerProfile | EmployerProfile | User;
-    }> => {
-      try {
-        return await apiFetch("/users/me", {
-          method: "GET",
-        });
-      } catch (err) {
-        logApiFallback("/users/me", err);
-        const seeker = mockUsers.find(
-          (u) => u.role === "jobseeker",
-        ) as JobseekerProfile;
-        return { user: seeker };
-      }
+    getMe: async (): Promise<{ user: JobseekerProfile | EmployerProfile | User }> => {
+      return apiFetch("/users/me", { method: "GET" });
     },
-
-    updateMe: async (
-      body: Record<string, any>,
-    ): Promise<{ message: string; profile: any }> => {
-      try {
-        return await apiFetch("/users/me", {
-          method: "PUT",
-          body: JSON.stringify(body),
-        });
-      } catch (err) {
-        logApiFallback("/users/me [PUT]", err);
-        return { message: "Updated profile in local preview", profile: body };
-      }
+    updateMe: async (body: Record<string, any>): Promise<{ message: string; profile: any }> => {
+      return apiFetch("/users/me", { method: "PUT", body: JSON.stringify(body) });
     },
-
-    changePassword: async (
-      body: Record<string, any>,
-    ): Promise<{ message: string }> => {
-      try {
-        return await apiFetch("/users/me/password", {
-          method: "PUT",
-          body: JSON.stringify(body),
-        });
-      } catch (err) {
-        logApiFallback("/users/me/password [PUT]", err);
-        return { message: "Password updated in local preview" };
-      }
+    changePassword: async (body: Record<string, any>): Promise<{ message: string }> => {
+      return apiFetch("/users/me/password", { method: "PUT", body: JSON.stringify(body) });
     },
-
     deleteMe: async (): Promise<{ message: string }> => {
-      try {
-        return await apiFetch("/users/me", {
-          method: "DELETE",
-        });
-      } catch (err) {
-        logApiFallback("/users/me [DELETE]", err);
-        return { message: "Account deleted in local preview" };
-      }
+      return apiFetch("/users/me", { method: "DELETE" });
     },
-
-    getUsers: async (
-      params?: Record<string, any>,
-    ): Promise<PaginatedResponse<User>> => {
+    getUsers: async (params?: Record<string, any>): Promise<PaginatedResponse<User>> => {
       const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-      try {
-        return await apiFetch(`/users${query}`, {
-          method: "GET",
-        });
-      } catch (err) {
-        logApiFallback("/users", err);
-        return {
-          message: "Loaded from mock data",
-          pagination: { total: mockUsers.length, page: 1, limit: 10, pages: 1 },
-          users: mockUsers,
-        };
-      }
+      return apiFetch(`/users${query}`, { method: "GET" });
     },
-
     deleteUser: async (id: number): Promise<{ message: string }> => {
-      return apiFetch(`/users/${id}`, {
-        method: "DELETE",
-      });
+      return apiFetch(`/users/${id}`, { method: "DELETE" });
     },
-
-    getUserById: async (
-      id: number,
-    ): Promise<{ user: JobseekerProfile | EmployerProfile }> => {
-      try {
-        return await apiFetch(`/users/${id}`, {
-          method: "GET",
-        });
-      } catch (err) {
-        logApiFallback(`/users/${id}`, err);
-        const matched = mockUsers.find((u) => u.id === id) as
-          | JobseekerProfile
-          | EmployerProfile;
-        if (!matched) throw new Error("Mock user not found");
-        return { user: matched };
-      }
+    getUserById: async (id: number): Promise<{ user: JobseekerProfile | EmployerProfile }> => {
+      return apiFetch(`/users/${id}`, { method: "GET" });
     },
   },
 
-  /**
-   * Admin Services
-   */
   admin: {
-    getUsers: async (
-      params?: Record<string, any>,
-    ): Promise<PaginatedResponse<any>> => {
+    getUsers: async (params?: Record<string, any>): Promise<PaginatedResponse<any>> => {
       const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-      try {
-        return await apiFetch(`/users${query}`, { method: "GET" });
-      } catch (err) {
-        logApiFallback("/users [GET]", err);
-        return {
-          message: "Loaded from mock data",
-          pagination: { total: 0, page: 1, limit: 10, pages: 1 },
-          users: [],
-        };
-      }
+      return apiFetch(`/users${query}`, { method: "GET" });
     },
     getSystemMetrics: async (): Promise<any> => {
-      try {
-        return await apiFetch(`/users/admin/stats`, { method: "GET" });
-      } catch (err) {
-        logApiFallback("/users/admin/stats [GET]", err);
-        return { totalUsers: 1200, activeJobs: 350, totalApplications: 2500 };
-      }
+      return apiFetch(`/users/admin/stats`, { method: "GET" });
     },
   },
 
-  /**
-   * Job Posting & Search Services
-   */
   jobs: {
-    getEmployerStats: async (): Promise<{ activeJobs: number, totalApplicants: number, unreadNotifications: number }> => {
-      try {
-        return await apiFetch("/jobs/employer/stats", { method: "GET" });
-      } catch (err) {
-        logApiFallback("/jobs/employer/stats [GET]", err);
-        return { activeJobs: 0, totalApplicants: 0, unreadNotifications: 0 };
-      }
+    getEmployerStats: async (): Promise<{ activeJobs: number; totalApplicants: number; unreadNotifications: number }> => {
+      return apiFetch("/jobs/employer/stats", { method: "GET" });
     },
-
-    getJobs: async (
-      params?: Record<string, any>,
-    ): Promise<PaginatedResponse<Job>> => {
+    getJobs: async (params?: Record<string, any>): Promise<PaginatedResponse<Job>> => {
       const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-      try {
-        return await apiFetch(`/jobs${query}`, {
-          method: "GET",
-        });
-      } catch (err) {
-        logApiFallback("/jobs", err);
-        return {
-          message: "Loaded from mock data",
-          pagination: { total: mockJobs.length, page: 1, limit: 10, pages: 1 },
-          jobs: mockJobs,
-        };
-      }
+      return apiFetch(`/jobs${query}`, { method: "GET" });
     },
-
-    searchJobs: async (
-      params: Record<string, any>,
-    ): Promise<PaginatedResponse<Job>> => {
+    searchJobs: async (params: Record<string, any>): Promise<PaginatedResponse<Job>> => {
       const query = `?${new URLSearchParams(params).toString()}`;
-      try {
-        return await apiFetch(`/jobs/search${query}`, {
-          method: "GET",
-        });
-      } catch (err) {
-        logApiFallback("/jobs/search", err);
-        // Basic offline search filter
-        const text = (params.q || "").toLowerCase();
-        const filtered = mockJobs.filter(
-          (j) =>
-            j.title.toLowerCase().includes(text) ||
-            j.description.toLowerCase().includes(text),
-        );
-        return {
-          message: "Filtered from mock data",
-          pagination: { total: filtered.length, page: 1, limit: 10, pages: 1 },
-          jobs: filtered,
-        };
-      }
+      return apiFetch(`/jobs/search${query}`, { method: "GET" });
     },
-
     getJob: async (id: number): Promise<{ job: Job }> => {
-      try {
-        return await apiFetch(`/jobs/${id}`, {
-          method: "GET",
-        });
-      } catch (err) {
-        logApiFallback(`/jobs/${id}`, err);
-        const found = mockJobs.find((j) => j.id === id);
-        if (!found) throw new Error("Mock job listing not found");
-        return { job: found };
-      }
+      return apiFetch(`/jobs/${id}`, { method: "GET" });
     },
-
-    postJob: async (
-      body: Record<string, any>,
-    ): Promise<{ message: string; job: Job }> => {
-      try {
-        return await apiFetch("/jobs", {
-          method: "POST",
-          body: JSON.stringify(body),
-        });
-      } catch (err) {
-        logApiFallback("/jobs [POST]", err);
-        const newJob: Job = {
-          id: Date.now(),
-          employer_id: 2,
-          employer_name: "Mock Company",
-          title: body.title,
-          description: body.description,
-          location: body.location,
-          industry: body.industry,
-          salary: body.salary || null,
-          salary_min: Number(body.salary_min) || null,
-          salary_max: Number(body.salary_max) || null,
-          job_type: body.job_type || "full-time",
-          deadline: body.deadline || null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        mockJobs.unshift(newJob);
-        return { message: "Job created in local preview", job: newJob };
-      }
+    postJob: async (body: Record<string, any>): Promise<{ message: string; job: Job }> => {
+      return apiFetch("/jobs", { method: "POST", body: JSON.stringify(body) });
     },
-
-    updateJob: async (
-      id: number,
-      body: Record<string, any>,
-    ): Promise<{ message: string; job: Job }> => {
-      try {
-        return await apiFetch(`/jobs/${id}`, {
-          method: "PUT",
-          body: JSON.stringify(body),
-        });
-      } catch (err) {
-        logApiFallback(`/jobs/${id} [PUT]`, err);
-        const found = mockJobs.find((j) => j.id === id);
-        if (!found) throw new Error("Mock job listing not found");
-        const updated = { ...found, ...body };
-        return { message: "Job updated in local preview", job: updated };
-      }
+    updateJob: async (id: number, body: Record<string, any>): Promise<{ message: string; job: Job }> => {
+      return apiFetch(`/jobs/${id}`, { method: "PUT", body: JSON.stringify(body) });
     },
-
     deleteJob: async (id: number): Promise<{ message: string }> => {
-      try {
-        return await apiFetch(`/jobs/${id}`, {
-          method: "DELETE",
-        });
-      } catch (err) {
-        logApiFallback(`/jobs/${id} [DELETE]`, err);
-        return { message: "Job deleted from local preview" };
-      }
+      return apiFetch(`/jobs/${id}`, { method: "DELETE" });
     },
   },
 
-  /**
-   * Application Processing Services
-   */
   applications: {
-    getStats: async (): Promise<{ total: number, applied: number, accepted: number, rejected: number }> => {
-      try {
-        return await apiFetch("/applications/stats", { method: "GET" });
-      } catch (err) {
-        logApiFallback("/applications/stats [GET]", err);
-        return { total: 0, applied: 0, accepted: 0, rejected: 0 };
-      }
+    getStats: async (): Promise<{ total: number; applied: number; accepted: number; rejected: number }> => {
+      return apiFetch("/applications/stats", { method: "GET" });
     },
-
-    apply: async (
-      jobId: number,
-      coverLetter?: string,
-    ): Promise<{ message: string; application: Application }> => {
-      try {
-        return await apiFetch(`/apply/${jobId}`, {
-          method: "POST",
-          body: JSON.stringify({ cover_letter: coverLetter }),
-        });
-      } catch (err) {
-        logApiFallback(`/apply/${jobId}`, err);
-        const associatedJob = mockJobs.find((j) => j.id === jobId);
-        const mockApp: Application = {
-          id: Date.now(),
-          job_id: jobId,
-          user_id: 1,
-          status: "applied",
-          cover_letter: coverLetter || null,
-          applied_at: new Date().toISOString(),
-          job_title: associatedJob?.title || "Position Applied",
-          employer_name: associatedJob?.employer_name || "Enterprise Partner",
-          salary: associatedJob?.salary || "",
-          location: associatedJob?.location || "",
-          job_type: associatedJob?.job_type || "full-time",
-        };
-        mockApplications.unshift(mockApp);
-        return {
-          message: "Application submitted in local preview",
-          application: mockApp,
-        };
-      }
+    apply: async (jobId: number, coverLetter?: string): Promise<{ message: string; application: Application }> => {
+      return apiFetch(`/apply/${jobId}`, { method: "POST", body: JSON.stringify({ cover_letter: coverLetter }) });
     },
-
-    getMyApplications: async (
-      params?: Record<string, any>,
-    ): Promise<PaginatedResponse<Application>> => {
+    getMyApplications: async (params?: Record<string, any>): Promise<PaginatedResponse<Application>> => {
       const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-      try {
-        return await apiFetch(`/applications${query}`, {
-          method: "GET",
-        });
-      } catch (err) {
-        logApiFallback("/applications", err);
-        return {
-          message: "Loaded from mock data",
-          pagination: {
-            total: mockApplications.length,
-            page: 1,
-            limit: 10,
-            pages: 1,
-          },
-          applications: mockApplications,
-        };
-      }
+      return apiFetch(`/applications${query}`, { method: "GET" });
     },
-
     withdraw: async (id: number): Promise<{ message: string }> => {
-      try {
-        return await apiFetch(`/applications/${id}`, {
-          method: "DELETE",
-        });
-      } catch (err) {
-        logApiFallback(`/applications/${id} [DELETE]`, err);
-        const index = mockApplications.findIndex((a) => a.id === id);
-        if (index !== -1) {
-          mockApplications.splice(index, 1);
-        }
-        return { message: "Application withdrawn from local preview" };
-      }
+      return apiFetch(`/applications/${id}`, { method: "DELETE" });
     },
-
-    getJobApplications: async (
-      jobId: number,
-      params?: Record<string, any>,
-    ): Promise<PaginatedResponse<Application>> => {
+    getJobApplications: async (jobId: number, params?: Record<string, any>): Promise<PaginatedResponse<Application>> => {
       const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-      try {
-        return await apiFetch(`/applications/job/${jobId}${query}`, {
-          method: "GET",
-        });
-      } catch (err) {
-        logApiFallback(`/applications/job/${jobId}`, err);
-        const filtered = mockApplications.filter((a) => a.job_id === jobId);
-        return {
-          message: "Loaded from mock data",
-          pagination: { total: filtered.length, page: 1, limit: 10, pages: 1 },
-          applications: filtered,
-        };
-      }
+      return apiFetch(`/applications/job/${jobId}${query}`, { method: "GET" });
     },
-
-    updateStatus: async (
-      id: number,
-      status: "accepted" | "rejected",
-    ): Promise<{ message: string; application: Application }> => {
-      try {
-        return await apiFetch(`/applications/${id}/status`, {
-          method: "PATCH",
-          body: JSON.stringify({ status }),
-        });
-      } catch (err) {
-        logApiFallback(`/applications/${id}/status [PATCH]`, err);
-        const found = mockApplications.find((a) => a.id === id);
-        if (!found) throw new Error("Mock application not found");
-        found.status = status;
-        return {
-          message: "Status updated in local preview",
-          application: found,
-        };
-      }
+    updateStatus: async (id: number, status: "accepted" | "rejected"): Promise<{ message: string; application: Application }> => {
+      return apiFetch(`/applications/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
     },
   },
 
-  /**
-   * Bookmarks / Saved Jobs Services
-   */
   bookmarks: {
     getBookmarkedJobIds: async (): Promise<number[]> => {
-      try {
-        const response = await apiFetch("/bookmarks", { method: "GET" });
-        return response.job_ids || response.bookmarks || [];
-      } catch (err) {
-        logApiFallback("/bookmarks [GET]", err);
-        if (typeof window !== "undefined") {
-          return JSON.parse(localStorage.getItem("saved_job_ids") || "[]").map(
-            Number,
-          );
-        }
-        return [];
-      }
+      const response = await apiFetch("/bookmarks", { method: "GET" });
+      return response.job_ids || response.bookmarks || [];
     },
-
     saveJob: async (jobId: number): Promise<{ message: string }> => {
-      try {
-        return await apiFetch("/bookmarks", {
-          method: "POST",
-          body: JSON.stringify({ job_id: jobId }),
-        });
-      } catch (err) {
-        logApiFallback("/bookmarks [POST]", err);
-        if (typeof window !== "undefined") {
-          const savedIds = JSON.parse(
-            localStorage.getItem("saved_job_ids") || "[]",
-          ) as (string | number)[];
-          const numericId = Number(jobId);
-          if (!savedIds.map(Number).includes(numericId)) {
-            localStorage.setItem(
-              "saved_job_ids",
-              JSON.stringify([...savedIds, numericId]),
-            );
-          }
-        }
-        return { message: "Saved job in local preview" };
-      }
+      return apiFetch("/bookmarks", { method: "POST", body: JSON.stringify({ job_id: jobId }) });
     },
-
     unsaveJob: async (jobId: number): Promise<{ message: string }> => {
-      try {
-        return await apiFetch(`/bookmarks/${jobId}`, {
-          method: "DELETE",
-        });
-      } catch (err) {
-        logApiFallback(`/bookmarks/${jobId} [DELETE]`, err);
-        if (typeof window !== "undefined") {
-          const savedIds = JSON.parse(
-            localStorage.getItem("saved_job_ids") || "[]",
-          ) as (string | number)[];
-          const updated = savedIds.filter((id) => Number(id) !== Number(jobId));
-          localStorage.setItem("saved_job_ids", JSON.stringify(updated));
-        }
-        return { message: "Removed job in local preview" };
-      }
+      return apiFetch(`/bookmarks/${jobId}`, { method: "DELETE" });
     },
   },
 
-  /**
-   * Notifications Services
-   */
   notifications: {
-    getNotifications: async (
-      params?: Record<string, any>,
-    ): Promise<PaginatedResponse<any>> => {
+    getNotifications: async (params?: Record<string, any>): Promise<PaginatedResponse<any>> => {
       const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-      try {
-        return await apiFetch(`/notifications${query}`, {
-          method: "GET",
-        });
-      } catch (err) {
-        logApiFallback("/notifications", err);
-        let userRole = "jobseeker";
-        if (typeof window !== "undefined") {
-          try {
-            const devOverride = localStorage.getItem("roleOverride");
-            if (devOverride) {
-              userRole = devOverride;
-            } else {
-              const userStr = localStorage.getItem("user");
-              if (userStr) {
-                const userObj = JSON.parse(userStr);
-                if (userObj && userObj.role) {
-                  userRole = userObj.role;
-                }
-              }
-            }
-          } catch {}
-        }
-
-        let filteredLogs = mockJobseekerActivityLogs;
-        if (userRole === "employer") {
-          filteredLogs = mockEmployerActivityLogs;
-        } else if (userRole === "admin") {
-          filteredLogs = mockAdminActivityLogs;
-        }
-
-        const formatted = filteredLogs.map((log) => ({
-          id: log.id,
-          user_id: 1,
-          type: log.type,
-          message: log.text,
-          read: false,
-          created_at: new Date(
-            Date.now() - log.id * 4 * 3600 * 1000,
-          ).toISOString(),
-        }));
-
-        return {
-          message: "Loaded from mock data",
-          pagination: { total: formatted.length, page: 1, limit: 10, pages: 1 },
-          notifications: formatted,
-        } as any;
-      }
+      return apiFetch(`/notifications${query}`, { method: "GET" });
     },
-
     getAllNotifications: async (): Promise<{ notifications: any[] }> => {
-      try {
-        return await apiFetch("/notifications/all", {
-          method: "GET",
-        });
-      } catch (err) {
-        logApiFallback("/notifications/all", err);
-        let userRole = "jobseeker";
-        if (typeof window !== "undefined") {
-          try {
-            const devOverride = localStorage.getItem("roleOverride");
-            if (devOverride) {
-              userRole = devOverride;
-            } else {
-              const userStr = localStorage.getItem("user");
-              if (userStr) {
-                const userObj = JSON.parse(userStr);
-                if (userObj && userObj.role) {
-                  userRole = userObj.role;
-                }
-              }
-            }
-          } catch {}
-        }
-
-        let filteredLogs = mockJobseekerActivityLogs;
-        if (userRole === "employer") {
-          filteredLogs = mockEmployerActivityLogs;
-        } else if (userRole === "admin") {
-          filteredLogs = mockAdminActivityLogs;
-        }
-
-        const formatted = filteredLogs.map((log) => ({
-          id: log.id,
-          user_id: 1,
-          type: log.type,
-          message: log.text,
-          read: false,
-          created_at: new Date(
-            Date.now() - log.id * 4 * 3600 * 1000,
-          ).toISOString(),
-        }));
-
-        return {
-          notifications: formatted,
-        };
-      }
+      return apiFetch("/notifications/all", { method: "GET" });
+    },
+    markAsRead: async (id: number): Promise<{ message: string; notification: any }> => {
+      return apiFetch(`/notifications/${id}/read`, { method: "PATCH" });
     },
   },
 };

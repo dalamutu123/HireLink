@@ -73,8 +73,9 @@ export default function SavedJobsPage() {
           savedIds.map((id) => apiService.bookmarks.unsaveJob(Number(id)))
         );
         
-        // Update local cache and UI
-        localStorage.setItem("saved_job_ids", JSON.stringify([]));
+        // Update UI
+        setSavedIds([]);
+        setJobs([]);
         window.dispatchEvent(new Event("saved_jobs_changed"));
       } catch (err) {
         console.error("Failed to clear bookmarks on backend:", err);

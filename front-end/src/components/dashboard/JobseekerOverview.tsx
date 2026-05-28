@@ -5,7 +5,13 @@ import { useAuth } from "@/app/hooks/useAuth";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardTallyCard } from "@/components/dashboard/DashboardTallyCard";
 import { apiService, Job, Application } from "@/lib/api-service";
-import { mockActivityLogs, ActivityLog } from "@/lib/mock-data";
+
+export interface ActivityLog {
+  id: number;
+  text: string;
+  timestamp: string;
+  type: string;
+}
 import {
   FileText,
   Calendar,
@@ -42,13 +48,19 @@ export default function JobseekerOverview() {
       try {
         const notifRes = await apiService.notifications.getAllNotifications();
         if (notifRes && notifRes.notifications) {
-          const storedRead = JSON.parse(
-            localStorage.getItem("read_notification_ids") || "[]",
-          ).map(Number);
           const unread = notifRes.notifications.filter(
-            (n: any) => !n.read && !storedRead.includes(Number(n.id)),
+            (n: any) => !n.read,
           ).length;
           setUnreadCount(unread);
+          
+          // Map notifications to ActivityLog format
+          const mappedLogs = notifRes.notifications.map((n: any) => ({
+            id: n.id,
+            text: n.message,
+            timestamp: new Date(n.created_at).toLocaleString(),
+            type: n.type || "system"
+          }));
+          setActivities(mappedLogs);
         }
       } catch (err) {
         console.error("Failed to load notifications:", err);
@@ -97,10 +109,7 @@ export default function JobseekerOverview() {
           );
         }
 
-        // Load activities
-        setActivities(mockActivityLogs);
-
-        // Fetch Notifications
+        // Fetch Notifications and Activity Logs
         await fetchUnreadCount();
       } catch (err) {
         console.error("Failed to load seeker overview data:", err);
