@@ -83,16 +83,19 @@ const ManageJobsPage = () => {
       <div className="max-w-5xl mx-auto">
 
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-6">
-          <DashboardHeader icon={<Briefcase />} title="Manage Jobs" subtitle="Manage your posted jobs" />
-
-          <Link
-            href="/dashboard/jobs/new"
-            className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-600 text-white px-5 py-3 rounded-xl font-medium transition"
-          >
-            Post New Job
-          </Link>
-        </div>
+        <DashboardHeader
+          icon={<Briefcase className="w-8 h-8 text-blue-600" />}
+          title="Manage Jobs"
+          subtitle="Manage your posted jobs"
+          action={
+            <Link
+              href="/dashboard/jobs/new"
+              className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-600 text-white px-5 py-3 rounded-xl font-medium transition"
+            >
+              Post New Job
+            </Link>
+          }
+        />
 
         {loading ? (
           <div className="flex justify-center py-20">

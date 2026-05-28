@@ -8,6 +8,9 @@ import { z } from "zod";
 import { useAuth } from "@/app/hooks/useAuth";
 import { apiService } from "@/lib/api-service";
 import { Button } from "@/components/ui/button";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { PlusCircle, ChevronLeft } from "lucide-react";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -97,12 +100,12 @@ export default function NewJobPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Create New Job</h1>
-          <p className="text-gray-600 mt-2">
-            Fill in the details to post a new job opportunity
-          </p>
-        </div>
+        <DashboardHeader
+          icon={<PlusCircle className="w-8 h-8 text-blue-600" />}
+          title="Create New Job"
+          subtitle="Post a new job opportunity"
+          description="Fill in the details below to publish a new position."
+        />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
