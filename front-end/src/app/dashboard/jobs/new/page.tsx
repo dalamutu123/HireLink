@@ -75,7 +75,7 @@ export default function NewJobPage() {
   const onSubmit = async (values: JobFormValues) => {
     try {
       await apiService.jobs.postJob(values);
-      router.push("/dashboard/jobs");
+      router.push("/dashboard/jobs/manage");
     } catch (error) {
       console.error("Error creating job:", error);
       form.setError("root", {

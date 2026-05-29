@@ -6,6 +6,8 @@ import {
   withdrawApplication,
   getJobApplications,
   updateStatus,
+  getEmployerApplications,
+  scheduleInterview,
 } from "./applications.controller.js";
 import { protect, restrictTo } from "../core/middleware.js";
 import {
@@ -24,7 +26,9 @@ router.post("/:jobId", protect, restrictTo("jobseeker"), applyForJobValidator, a
 router.delete("/:id", protect, restrictTo("jobseeker"), withdrawApplication);
 
 // ─── Employer Only Routes ─────────────────────────────────────
+router.get("/employer", protect, restrictTo("employer"), paginationQueryValidator, getEmployerApplications);
 router.get("/job/:job_id", protect, restrictTo("employer"), paginationQueryValidator, getJobApplications);
 router.patch("/:id/status", protect, restrictTo("employer"), patchStatusValidator, updateStatus);
+router.patch("/:id/interview", protect, restrictTo("employer"), scheduleInterview);
 
 export default router;

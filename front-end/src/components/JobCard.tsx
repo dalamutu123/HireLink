@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MapPin, Bookmark, Clock, DollarSign } from "lucide-react";
 import { apiService } from "@/lib/api-service";
 import { useAuth } from "@/app/providers/AuthProvider";
+import { formatSalary } from "@/lib/utils";
 
 interface JobCardProps {
   id: string | number;
@@ -162,7 +163,7 @@ export default function JobCard({
           <span className="w-1 h-1 bg-slate-300 rounded-full shrink-0 hidden sm:block"></span>
           <div className="flex items-center gap-1.5 text-slate-700 min-w-0">
             <DollarSign size={15} strokeWidth={2.5} className="text-emerald-500 shrink-0" />
-            <span className="truncate">{salary || "Competitive"}</span>
+            <span className="truncate">{formatSalary(salary)}</span>
           </div>
         </div>
 

@@ -7,6 +7,8 @@ import {
   findApplicationsByJob,
   updateApplicationStatus,
   deleteApplication,
+  findApplicationsByEmployer,
+  scheduleInterviewQuery,
 } from "./applications.model.js";
 import { findJobById } from "../jobs/jobs.model.js";
 import { findUserById } from "../users/users.model.js";
@@ -42,6 +44,9 @@ export const applyForJob = async (req, res) => {
     const notificationMessage = `${jobseeker.name} applied for your job posting "${job.title}".`;
 
     await createNotification(job.employer_id, "new_application", notificationMessage);
+
+    const seekerNotificationMessage = `You successfully applied for the "${job.title}" position at ${employer.name}.`;
+    await createNotification(jobseeker.id, "application", seekerNotificationMessage);
 
     try {
       await sendNewApplicationEmail({
@@ -224,5 +229,63 @@ export const updateStatus = async (req, res) => {
   } catch (error) {
     console.error("Update application status error:", error.message);
     res.status(500).json({ message: "Server error updating application status" });
+  }
+};
+
+// PATCH /api/applications/:id/interview — employer schedules interview
+export const scheduleInterview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { interviewDate } = req.body;
+    const employerId = req.user.id;
+
+    if (!interviewDate) {
+      return res.status(400).json({ message: "Interview date is required" });
+    }
+
+    const application = await findApplicationById(id);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    const job = await findJobById(application.job_id);
+    if (job.employer_id !== employerId) {
+      return res.status(403).json({ message: "You are not authorized to update this application" });
+    }
+
+    const updatedApplication = await scheduleInterviewQuery(id, interviewDate);
+    const employer = await findUserById(employerId);
+
+    const notificationMessage = `You have been invited to an interview for "${job.title}" by ${employer.name} on ${new Date(interviewDate).toLocaleString()}.`;
+
+    await createNotification(application.jobseeker_id, "interview_scheduled", notificationMessage);
+
+    res.status(200).json({
+      message: "Interview scheduled successfully",
+      application: formatApplication(updatedApplication),
+      notificationSent: true,
+    });
+  } catch (error) {
+    console.error("Schedule interview error:", error.message);
+    res.status(500).json({ message: "Server error scheduling interview" });
+  }
+};
+
+// GET /api/applications/employer — Get all applications for jobs posted by this employer
+export const getEmployerApplications = async (req, res) => {
+  try {
+    const employerId = req.user.id;
+    const { page, limit, offset } = parsePagination(req.query);
+
+    const { rows, total } = await findApplicationsByEmployer(employerId, { limit, offset });
+
+    res.status(200).json({
+      message: "Applications retrieved successfully",
+      pagination: buildPagination(total, page, limit),
+      applications: formatApplications(rows),
+    });
+  } catch (error) {
+    console.error("Get employer applications error:", error.message);
+    res.status(500).json({ message: "Server error getting applications" });
   }
 };

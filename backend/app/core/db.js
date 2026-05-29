@@ -11,4 +11,8 @@ pool.connect()
   .then(() => console.log("Connected to PostgreSQL database"))
   .catch((err) => console.error("Database connection error:", err.message));
 
+pool.on("error", (err, client) => {
+  console.error("Unexpected error on idle database client:", err);
+});
+
 export default pool;

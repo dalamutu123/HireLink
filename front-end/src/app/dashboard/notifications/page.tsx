@@ -125,21 +125,23 @@ export default function NotificationsPage() {
         setNotifications(response.notifications);
       }
 
-      // Fetch Applications and Jobs for Smart Recommendations
-      const appRes = await apiService.applications.getMyApplications();
-      const jobRes = await apiService.jobs.getJobs();
-      if (jobRes && jobRes.jobs) {
-        const seekerSkills = (user as any)?.skills?.toLowerCase() || "";
-        const matches = jobRes.jobs.filter((job) => {
-          const alreadyApplied = appRes?.applications?.some((a) => a.job_id === job.id);
-          if (alreadyApplied) return false;
+      // Fetch Applications and Jobs for Smart Recommendations (Jobseeker only)
+      if (user?.role === "jobseeker") {
+        const appRes = await apiService.applications.getMyApplications();
+        const jobRes = await apiService.jobs.getJobs();
+        if (jobRes && jobRes.jobs) {
+          const seekerSkills = (user as any)?.skills?.toLowerCase() || "";
+          const matches = jobRes.jobs.filter((job) => {
+            const alreadyApplied = appRes?.applications?.some((a) => a.job_id === job.id);
+            if (alreadyApplied) return false;
 
-          const titleMatch = seekerSkills.includes(job.title.toLowerCase());
-          const industryMatch = seekerSkills.includes(job.industry.toLowerCase());
-          const descMatch = job.description.toLowerCase().split(" ").some((word: string) => seekerSkills.includes(word));
-          return titleMatch || industryMatch || descMatch;
-        });
-        setRecommendedJobs(matches.length > 0 ? matches.slice(0, 2) : jobRes.jobs.slice(0, 2));
+            const titleMatch = seekerSkills.includes(job.title.toLowerCase());
+            const industryMatch = seekerSkills.includes(job.industry.toLowerCase());
+            const descMatch = job.description.toLowerCase().split(" ").some((word: string) => seekerSkills.includes(word));
+            return titleMatch || industryMatch || descMatch;
+          });
+          setRecommendedJobs(matches.length > 0 ? matches.slice(0, 2) : jobRes.jobs.slice(0, 2));
+        }
       }
       
       if (showRefreshedToast) {

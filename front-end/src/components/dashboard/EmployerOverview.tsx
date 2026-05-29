@@ -56,7 +56,7 @@ const EmployerOverview: React.FC = () => {
         });
 
         // Fetch Recent Jobs/Applications
-        const applicationsResponse = await apiService.applications.getMyApplications();
+        const applicationsResponse = await apiService.applications.getEmployerApplications();
         const applications = applicationsResponse.applications || [];
 
         const formattedApplicants: Applicant[] = applications

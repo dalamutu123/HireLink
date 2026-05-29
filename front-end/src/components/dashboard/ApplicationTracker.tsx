@@ -9,38 +9,27 @@ interface ApplicationTrackerProps {
 export default function ApplicationTracker({ status, className = "" }: ApplicationTrackerProps) {
   const steps = [
     { key: "applied", label: "Applied" },
-    { key: "review", label: "Under Review" },
     { key: "interview", label: "Interview" },
-    { key: "decision", label: status === "rejected" ? "Rejected" : "Decision" }
+    { key: "decision", label: status === "rejected" ? "Rejected" : status === "accepted" ? "Accepted" : "Decision" }
   ];
 
   return (
     <div className={`pt-2 ${className}`}>
-      <div className="flex justify-between items-start relative">
+      <div className="flex justify-between items-start relative px-4">
         {/* Connector Line */}
-        <div className="absolute left-4 right-4 top-3.5 -translate-y-1/2 h-[3px] bg-slate-100 z-0">
+        <div className="absolute left-10 right-10 top-3.5 -translate-y-1/2 h-[3px] bg-slate-100 z-0">
           <div
             className={`h-full bg-indigo-500 rounded-full transition-all duration-500`}
             style={{
-              width:
-                status === "accepted"
-                  ? "66%"
-                  : status === "rejected"
-                    ? "100%"
-                    : "25%",
+              width: status === "accepted" || status === "rejected" ? "100%" : status === "interview" ? "50%" : "0%",
             }}
           />
         </div>
 
         {steps.map((step, stepIdx) => {
-          const isFinished =
-            status === "accepted"
-              ? stepIdx <= 2
-              : status === "rejected"
-                ? stepIdx <= 3
-                : stepIdx === 0;
-
-          const isRejectedFinal = status === "rejected" && stepIdx === 3;
+          const isFinished = status === "accepted" || status === "rejected" ? true : status === "interview" ? stepIdx <= 1 : stepIdx === 0;
+          const isRejectedFinal = status === "rejected" && stepIdx === 2;
+          const isAcceptedFinal = status === "accepted" && stepIdx === 2;
 
           return (
             <div key={step.label} className="flex flex-col items-center z-10">
@@ -48,9 +37,11 @@ export default function ApplicationTracker({ status, className = "" }: Applicati
                 className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
                   isRejectedFinal
                     ? "bg-rose-500 text-white border-2 border-rose-600 scale-105"
-                    : isFinished
-                      ? "bg-indigo-600 text-white border-2 border-indigo-700"
-                      : "bg-white text-slate-300 border-2 border-slate-100"
+                    : isAcceptedFinal
+                      ? "bg-emerald-500 text-white border-2 border-emerald-600 scale-105"
+                      : isFinished
+                        ? "bg-indigo-600 text-white border-2 border-indigo-700"
+                        : "bg-white text-slate-300 border-2 border-slate-100"
                 }`}
               >
                 {isFinished ? (

@@ -49,9 +49,10 @@ export interface Application {
   id: number;
   job_id: number;
   user_id: number;
-  status: "applied" | "accepted" | "rejected";
+  status: "applied" | "interview" | "accepted" | "rejected";
   cover_letter: string | null;
   applied_at: string;
+  interview_date?: string;
   job_title?: string;
   location?: string;
   job_type?: string;
@@ -190,11 +191,15 @@ export const apiService = {
       return apiFetch("/applications/stats", { method: "GET" });
     },
     apply: async (jobId: number, coverLetter?: string): Promise<{ message: string; application: Application }> => {
-      return apiFetch(`/apply/${jobId}`, { method: "POST", body: JSON.stringify({ cover_letter: coverLetter }) });
+      return apiFetch(`/applications/${jobId}`, { method: "POST", body: JSON.stringify({ cover_letter: coverLetter }) });
     },
     getMyApplications: async (params?: Record<string, any>): Promise<PaginatedResponse<Application>> => {
       const query = params ? `?${new URLSearchParams(params).toString()}` : "";
       return apiFetch(`/applications${query}`, { method: "GET" });
+    },
+    getEmployerApplications: async (params?: Record<string, any>): Promise<PaginatedResponse<Application>> => {
+      const query = params ? `?${new URLSearchParams(params).toString()}` : "";
+      return apiFetch(`/applications/employer${query}`, { method: "GET" });
     },
     withdraw: async (id: number): Promise<{ message: string }> => {
       return apiFetch(`/applications/${id}`, { method: "DELETE" });
@@ -206,18 +211,25 @@ export const apiService = {
     updateStatus: async (id: number, status: "accepted" | "rejected"): Promise<{ message: string; application: Application }> => {
       return apiFetch(`/applications/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
     },
+    scheduleInterview: async (id: number, interviewDate: string): Promise<{ message: string; application: Application }> => {
+      return apiFetch(`/applications/${id}/interview`, { method: "PATCH", body: JSON.stringify({ interviewDate }) });
+    },
   },
 
   bookmarks: {
     getBookmarkedJobIds: async (): Promise<number[]> => {
       const response = await apiFetch("/bookmarks", { method: "GET" });
-      return response.job_ids || response.bookmarks || [];
+      if (response.job_ids) return response.job_ids;
+      if (response.bookmarks) {
+        return response.bookmarks.map((b: any) => Number(b.job_id || b.jobId));
+      }
+      return [];
     },
     saveJob: async (jobId: number): Promise<{ message: string }> => {
-      return apiFetch("/bookmarks", { method: "POST", body: JSON.stringify({ job_id: jobId }) });
+      return apiFetch("/bookmarks", { method: "POST", body: JSON.stringify({ jobId }) });
     },
     unsaveJob: async (jobId: number): Promise<{ message: string }> => {
-      return apiFetch(`/bookmarks/${jobId}`, { method: "DELETE" });
+      return apiFetch(`/bookmarks`, { method: "DELETE", body: JSON.stringify({ jobId }) });
     },
   },
 

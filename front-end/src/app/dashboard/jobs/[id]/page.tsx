@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
+import { useAuth } from "@/app/hooks/useAuth";
 import { apiService, Job, Application } from "@/lib/api-service";
 import {
   MapPin,
@@ -20,12 +21,15 @@ import {
   AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Share2, Link as LinkIcon, Twitter, Linkedin, Copy } from "lucide-react";
+import { formatSalary } from "@/lib/utils";
 import ApplicationTracker from "@/components/dashboard/ApplicationTracker";
 
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id;
+  const { user } = useAuth();
 
   // Guard against non-numeric parameters (like "manage" or "new") mapping into the dynamic [id] route, trigger true 404
   if (id && isNaN(Number(id))) {
@@ -52,15 +56,17 @@ export default function JobDetailPage() {
           setJob(jobRes.job);
         }
 
-        // Fetch User Applications to check candidacy
-        const appRes = await apiService.applications.getMyApplications();
-        if (appRes && appRes.applications) {
-          setApplications(appRes.applications);
-        }
+        // Fetch User Applications and Saved Status (jobseeker only)
+        if (user?.role === "jobseeker") {
+          const appRes = await apiService.applications.getMyApplications();
+          if (appRes && appRes.applications) {
+            setApplications(appRes.applications);
+          }
 
-        // Fetch Bookmarked status from backend
-        const savedIds = await apiService.bookmarks.getBookmarkedJobIds();
-        setIsSaved(savedIds.map(Number).includes(Number(id)));
+          // Fetch Bookmarked status from backend
+          const savedIds = await apiService.bookmarks.getBookmarkedJobIds();
+          setIsSaved(savedIds.map(Number).includes(Number(id)));
+        }
       } catch (err) {
         console.error("Failed to load details payload:", err);
       } finally {
@@ -69,7 +75,7 @@ export default function JobDetailPage() {
     }
     
     loadData();
-  }, [id]);
+  }, [id, user]);
 
   // Check if seeker already applied to this specific job
   const existingApplication = useMemo(() => {
@@ -256,17 +262,22 @@ export default function JobDetailPage() {
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs font-semibold text-slate-500 leading-relaxed">
                   {existingApplication.status === "accepted" && (
                     <span className="text-emerald-700 font-bold block">
-                      🎉 Congratulations! Stripe has accepted your application and bookmarked an interview calendar schedule. Keep an eye on your email inbox for interview links!
+                      🎉 Congratulations! {companyName} has officially accepted your application. You have been selected for the role!
+                    </span>
+                  )}
+                  {existingApplication.status === "interview" && (
+                    <span className="text-indigo-700 font-bold block">
+                      🗓️ Good news! {companyName} wants to interview you. Your interview is scheduled for {existingApplication.interview_date ? new Date(existingApplication.interview_date).toLocaleString() : "a future date"}. Keep an eye on your email inbox for meeting links!
                     </span>
                   )}
                   {existingApplication.status === "rejected" && (
                     <span className="text-rose-700 font-bold block">
-                      Thank you for applying. Paystack decided not to proceed with your application at this time. Keep exploring matches!
+                      Thank you for applying. {companyName} decided not to proceed with your application at this time. Keep exploring matches!
                     </span>
                   )}
                   {existingApplication.status === "applied" && (
                     <span>
-                      Your application has been received and is currently under review by the Stripe Talent Acquisition team. We will notify you here as soon as there is an update.
+                      Your application has been received and is currently under review by the {companyName} Talent Acquisition team. We will notify you here as soon as there is an update.
                     </span>
                   )}
                 </div>
@@ -330,9 +341,9 @@ export default function JobDetailPage() {
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block leading-none">
                     Salary Range
                   </span>
-                  <span className="text-sm font-extrabold text-slate-800 mt-1 block">
-                    {job.salary || "Competitive"}
-                  </span>
+                  <p className="text-sm font-black text-slate-900 truncate">
+                    {formatSalary(job.salary)}
+                  </p>
                 </div>
               </div>
 

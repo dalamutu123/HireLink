@@ -12,6 +12,7 @@ import {
   Users,
   ChevronDown,
   ChevronUp,
+  Calendar,
 } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
@@ -97,6 +98,22 @@ const JobApplicantsPage = () => {
       );
     } catch (error) {
       console.error("Failed to update application status:", error);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const scheduleInterview = async (applicationId: number, date: string) => {
+    try {
+      setUpdatingId(applicationId);
+      await apiService.applications.scheduleInterview(applicationId, date);
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === applicationId ? { ...app, status: "interview" } : app,
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to schedule interview:", error);
     } finally {
       setUpdatingId(null);
     }
@@ -313,6 +330,27 @@ const JobApplicantsPage = () => {
                       >
                         <X size={16} /> Decline
                       </button>
+
+                      <div className="flex items-center gap-2 ml-auto sm:ml-4 border-t sm:border-t-0 sm:border-l border-slate-200 pt-3 sm:pt-0 pl-0 sm:pl-4 w-full sm:w-auto mt-2 sm:mt-0">
+                        <input
+                          type="datetime-local"
+                          id={`interview-date-${app.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-sm border border-slate-200 rounded-md px-3 py-1.5 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
+                        />
+                        <button
+                          disabled={updatingId === app.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const dateVal = (document.getElementById(`interview-date-${app.id}`) as HTMLInputElement)?.value;
+                            if (dateVal) scheduleInterview(app.id, new Date(dateVal).toISOString());
+                            else alert("Please select a date and time for the interview.");
+                          }}
+                          className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-60"
+                        >
+                          <Calendar size={16} /> Schedule
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

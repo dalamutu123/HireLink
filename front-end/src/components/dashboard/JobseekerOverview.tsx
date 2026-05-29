@@ -5,6 +5,7 @@ import { useAuth } from "@/app/hooks/useAuth";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardTallyCard } from "@/components/dashboard/DashboardTallyCard";
 import { apiService, Job, Application } from "@/lib/api-service";
+import { formatSalary } from "@/lib/utils";
 
 export interface ActivityLog {
   id: number;
@@ -34,7 +35,7 @@ import ApplicationTracker from "./ApplicationTracker";
 
 export default function JobseekerOverview() {
   const { user } = useAuth();
-  const [statsData, setStatsData] = useState({ total: 0, applied: 0, accepted: 0, rejected: 0 });
+  const [statsData, setStatsData] = useState({ total: 0, applied: 0, accepted: 0, rejected: 0, interview: 0 });
   const [applications, setApplications] = useState<Application[]>([]);
   const [recommendedJobs, setRecommendedJobs] = useState<Job[]>([]);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
@@ -54,7 +55,7 @@ export default function JobseekerOverview() {
           setUnreadCount(unread);
           
           // Map notifications to ActivityLog format
-          const mappedLogs = notifRes.notifications.map((n: any) => ({
+          const mappedLogs = notifRes.notifications.slice(0, 6).map((n: any) => ({
             id: n.id,
             text: n.message,
             timestamp: new Date(n.created_at).toLocaleString(),
@@ -83,15 +84,13 @@ export default function JobseekerOverview() {
         // Fetch All Jobs to recommend smart matches
         const jobRes = await apiService.jobs.getJobs();
         if (jobRes && jobRes.jobs) {
+          const unappliedJobs = jobRes.jobs.filter(
+            (job) => !appRes.applications?.some((a) => a.job_id === job.id)
+          );
+
           // Recommend jobs based on matching industry or skills
           const seekerSkills = (user as any)?.skills?.toLowerCase() || "";
-          const matches = jobRes.jobs.filter((job) => {
-            // Don't recommend jobs already applied to
-            const alreadyApplied = appRes.applications?.some(
-              (a) => a.job_id === job.id,
-            );
-            if (alreadyApplied) return false;
-
+          const matches = unappliedJobs.filter((job) => {
             const titleMatch = seekerSkills.includes(job.title.toLowerCase());
             const industryMatch = seekerSkills.includes(
               job.industry.toLowerCase(),
@@ -105,7 +104,7 @@ export default function JobseekerOverview() {
 
           // Fallback to top 2 listings if no matches
           setRecommendedJobs(
-            matches.length > 0 ? matches.slice(0, 2) : jobRes.jobs.slice(0, 2),
+            matches.length > 0 ? matches.slice(0, 2) : unappliedJobs.slice(0, 2),
           );
         }
 
@@ -140,7 +139,7 @@ export default function JobseekerOverview() {
         timestamp: "Just now",
         type: "system",
       };
-      setActivities((prev) => [newLog, ...prev]);
+      setActivities((prev) => [newLog, ...prev].slice(0, 6));
     } catch (err) {
       console.error("Failed to withdraw application:", err);
     } finally {
@@ -165,7 +164,7 @@ export default function JobseekerOverview() {
           timestamp: "Just now",
           type: "application",
         };
-        setActivities((prev) => [newLog, ...prev]);
+        setActivities((prev) => [newLog, ...prev].slice(0, 6));
       }
     } catch (err) {
       console.error("Quick apply failed:", err);
@@ -200,7 +199,7 @@ export default function JobseekerOverview() {
     },
     {
       label: "Interviews Booked",
-      value: statsData.accepted,
+      value: statsData.interview || 0,
       icon: Calendar,
       color: "text-slate-700 bg-slate-100",
       description: "Awaiting your chat",
@@ -336,7 +335,7 @@ export default function JobseekerOverview() {
                               {app.salary && (
                                 <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50/50 px-2 py-0.5 rounded-md">
                                   <DollarSign size={13} />
-                                  {app.salary}
+                                  {formatSalary(app.salary)}
                                 </span>
                               )}
                             </div>
@@ -432,7 +431,7 @@ export default function JobseekerOverview() {
 
                     <div className="pt-4 flex items-center justify-between border-t border-slate-50 mt-4">
                       <span className="text-xs font-bold text-emerald-600">
-                        {job.salary || "Competitive"}
+                        {formatSalary(job.salary)}
                       </span>
                       <button
                         onClick={() => handleQuickApply(job.id)}

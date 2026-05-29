@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { formatSalary } from "@/lib/utils";
 import {
   Search,
   Briefcase,
@@ -331,7 +332,7 @@ export default function HomePage() {
                   title={job.title}
                   company={job.company}
                   location={job.location}
-                  salary={job.salary}
+                  salary={formatSalary(job.salary)}
                   type={job.type}
                   description={job.description}
                   tags={job.tags}

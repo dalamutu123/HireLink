@@ -99,7 +99,46 @@ export const updateApplicationStatus = async (id, status) => {
   return result.rows[0];
 };
 
+// Schedule Interview
+export const scheduleInterviewQuery = async (id, interviewDate) => {
+  const result = await pool.query(
+    `UPDATE applications SET status = 'interview', interview_date = $1
+     WHERE id = $2
+     RETURNING *`,
+    [interviewDate, id]
+  );
+  return result.rows[0];
+};
+
 // Delete an application
 export const deleteApplication = async (id) => {
   await pool.query(`DELETE FROM applications WHERE id = $1`, [id]);
+};
+
+// Get all applications for an employer's jobs (paginated)
+export const findApplicationsByEmployer = async (employerId, { limit, offset }) => {
+  const countResult = await pool.query(
+    `SELECT COUNT(*)::int AS total 
+     FROM applications a 
+     JOIN jobs j ON a.job_id = j.id 
+     WHERE j.employer_id = $1`,
+    [employerId]
+  );
+  const total = countResult.rows[0].total;
+
+  const result = await pool.query(
+    `SELECT a.*, u.name AS jobseeker_name, u.email AS jobseeker_email,
+            j.title AS job_title, j.location AS job_location,
+            jp.bio, jp.skills, jp.experience, jp.resume_url
+     FROM applications a
+     JOIN jobs j ON a.job_id = j.id
+     JOIN users u ON a.jobseeker_id = u.id
+     LEFT JOIN jobseeker_profiles jp ON a.jobseeker_id = jp.user_id
+     WHERE j.employer_id = $1
+     ORDER BY a.applied_at DESC
+     LIMIT $2 OFFSET $3`,
+    [employerId, limit, offset]
+  );
+
+  return { rows: result.rows, total };
 };
